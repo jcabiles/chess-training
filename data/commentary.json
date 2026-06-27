@@ -1,0 +1,646 @@
+{
+  "rnbqkbnr/pppppppp/8/8/4P3/8/PPPP1PPP/RNBQKBNR b KQkq -": {
+    "san": "e4",
+    "text": "Stakes a claim in the center and frees the king's bishop and queen; the most direct fight for central space."
+  },
+  "rnbqkbnr/pppp1ppp/8/4p3/4P3/8/PPPP1PPP/RNBQKBNR w KQkq -": {
+    "san": "e5",
+    "text": "Black answers symmetrically, contesting the center and refusing to cede space."
+  },
+  "rnbqkbnr/pppp1ppp/8/4p3/4P3/5N2/PPPP1PPP/RNBQKB1R b KQkq -": {
+    "san": "Nf3",
+    "text": "Develops a piece while attacking e5, forcing Black to react and gaining time."
+  },
+  "r1bqkbnr/pppp1ppp/2n5/4p3/4P3/5N2/PPPP1PPP/RNBQKB1R w KQkq -": {
+    "san": "Nc6",
+    "text": "Defends e5 and develops toward the center; the most natural reply."
+  },
+  "r1bqkbnr/pppp1ppp/2n5/4p3/2B1P3/5N2/PPPP1PPP/RNBQK2R b KQkq -": {
+    "san": "Bc4",
+    "text": "Aims the bishop at the f7 square, Black's weakest point, while preparing to castle."
+  },
+  "r1bqk1nr/pppp1ppp/2n5/2b1p3/2B1P3/5N2/PPPP1PPP/RNBQK2R w KQkq -": {
+    "san": "Bc5",
+    "text": "Mirrors White, targeting f2 and contesting the a7-g1 diagonal; the Giuoco Piano proper."
+  },
+  "r1bqk1nr/pppp1ppp/2n5/2b1p3/2B1P3/2P2N2/PP1P1PPP/RNBQK2R b KQkq -": {
+    "san": "c3",
+    "text": "Prepares d4 to build a broad pawn center and opens a retreat square for the bishop on c2."
+  },
+  "r1bqk2r/pppp1ppp/2n2n2/2b1p3/2B1P3/2P2N2/PP1P1PPP/RNBQK2R w KQkq -": {
+    "san": "Nf6",
+    "text": "Develops with tempo by eyeing e4, and prepares to castle into safety."
+  },
+  "r1bqk2r/pppp1ppp/2n2n2/2b1p3/2B1P3/2PP1N2/PP3PPP/RNBQK2R b KQkq -": {
+    "san": "d3",
+    "text": "The quiet, modern Giuoco Pianissimo: White supports e4 and plans slow maneuvering rather than an early d4 break."
+  },
+  "r1bqk2r/ppp2ppp/2np1n2/2b1p3/2B1P3/2PP1N2/PP3PPP/RNBQK2R w KQkq -": {
+    "san": "d6",
+    "text": "Black mirrors, solidifying e5 and opening the path for the light-squared bishop."
+  },
+  "r1bqkb1r/pppp1ppp/2n2n2/4p3/2B1P3/5N2/PPPP1PPP/RNBQK2R w KQkq -": {
+    "san": "Nf6",
+    "text": "The Two Knights Defense: Black counterattacks e4 immediately instead of defending with the bishop."
+  },
+  "r1bqkb1r/pppp1ppp/2n2n2/4p3/2BPP3/5N2/PPP2PPP/RNBQK2R b KQkq -": {
+    "san": "d4",
+    "text": "Strikes in the center at once, opening lines before Black is fully developed."
+  },
+  "r1bqkb1r/pppp1ppp/2n2n2/8/2BpP3/5N2/PPP2PPP/RNBQK2R w KQkq -": {
+    "san": "exd4",
+    "text": "Accepts the pawn to win central material, accepting a lead in White's development as compensation."
+  },
+  "r1bqkbnr/pppp1ppp/2n5/1B2p3/4P3/5N2/PPPP1PPP/RNBQK2R b KQkq -": {
+    "san": "Bb5",
+    "text": "The Ruy Lopez: the bishop pins the knight that defends e5, applying long-term pressure on Black's center."
+  },
+  "r1bqkbnr/1ppp1ppp/p1n5/1B2p3/4P3/5N2/PPPP1PPP/RNBQK2R w KQkq -": {
+    "san": "a6",
+    "text": "The Morphy Defense: questions the bishop immediately, forcing it to commit before Black continues."
+  },
+  "r1bqkbnr/1ppp1ppp/p1n5/4p3/B3P3/5N2/PPPP1PPP/RNBQK2R b KQkq -": {
+    "san": "Ba4",
+    "text": "Retreats but keeps the pin alive, maintaining pressure on c6 along the diagonal."
+  },
+  "r1bqkb1r/1ppp1ppp/p1n2n2/4p3/B3P3/5N2/PPPP1PPP/RNBQK2R w KQkq -": {
+    "san": "Nf6",
+    "text": "Counterattacks e4 and develops, hurrying toward castling."
+  },
+  "r1bqkb1r/1ppp1ppp/p1n2n2/4p3/B3P3/5N2/PPPP1PPP/RNBQ1RK1 b kq -": {
+    "san": "O-O",
+    "text": "Tucks the king to safety and connects the rooks; White offers the e4 pawn as a temporary gambit relying on quick play."
+  },
+  "r1bqk2r/1pppbppp/p1n2n2/4p3/B3P3/5N2/PPPP1PPP/RNBQ1RK1 w kq -": {
+    "san": "Be7",
+    "text": "A solid developing move preparing to castle, declining the sharp open lines of other defenses."
+  },
+  "r1bqk2r/1pppbppp/p1n2n2/4p3/B3P3/5N2/PPPP1PPP/RNBQR1K1 b kq -": {
+    "san": "Re1",
+    "text": "Defends e4 with the rook so White can develop the queenside without dropping the pawn."
+  },
+  "r1bqk2r/2ppbppp/p1n2n2/1p2p3/B3P3/5N2/PPPP1PPP/RNBQR1K1 w kq -": {
+    "san": "b5",
+    "text": "Gains queenside space and forces the bishop back, freeing Black's position."
+  },
+  "r1bqk2r/2ppbppp/p1n2n2/1p2p3/4P3/1B3N2/PPPP1PPP/RNBQR1K1 b kq -": {
+    "san": "Bb3",
+    "text": "Retreats to a strong diagonal still bearing down on f7 and the center."
+  },
+  "r1bqk2r/2p1bppp/p1np1n2/1p2p3/4P3/1B3N2/PPPP1PPP/RNBQR1K1 w kq -": {
+    "san": "d6",
+    "text": "Solidifies e5 and opens the path for the light-squared bishop, entering the Closed Ruy main lines."
+  },
+  "r1bqkb1r/pppp1ppp/2n2n2/1B2p3/4P3/5N2/PPPP1PPP/RNBQK2R w KQkq -": {
+    "san": "Nf6",
+    "text": "The Berlin Defense: Black ignores the pin and counterattacks e4, heading for a solid, durable structure."
+  },
+  "r1bqkb1r/pppp1ppp/2n2n2/1B2p3/4P3/5N2/PPPP1PPP/RNBQ1RK1 b kq -": {
+    "san": "O-O",
+    "text": "Castles and offers e4, trusting development over pawn-grabbing."
+  },
+  "r1bqkb1r/pppp1ppp/2n5/1B2p3/4n3/5N2/PPPP1PPP/RNBQ1RK1 w kq -": {
+    "san": "Nxe4",
+    "text": "Snaps off the pawn; the famous Berlin tabiya where Black trades into a resilient endgame."
+  },
+  "r1bqkb1r/pppp1ppp/2n5/1B2p3/3Pn3/5N2/PPP2PPP/RNBQ1RK1 b kq -": {
+    "san": "d4",
+    "text": "Opens the center to exploit Black's slightly exposed pieces and regain the initiative."
+  },
+  "r1bqkb1r/pppp1ppp/2nn4/1B2p3/3P4/5N2/PPP2PPP/RNBQ1RK1 w kq -": {
+    "san": "Nd6",
+    "text": "Retreats the knight to hit the bishop and untangle, steering toward the Berlin endgame."
+  },
+  "rnbqkbnr/pp1ppppp/8/2p5/4P3/8/PPPP1PPP/RNBQKBNR w KQkq -": {
+    "san": "c5",
+    "text": "The Sicilian: Black declines symmetry and fights for d4 from the flank, aiming for an unbalanced, counterattacking game."
+  },
+  "rnbqkbnr/pp1ppppp/8/2p5/4P3/5N2/PPPP1PPP/RNBQKB1R b KQkq -": {
+    "san": "Nf3",
+    "text": "Develops and prepares the central break d4."
+  },
+  "rnbqkbnr/pp2pppp/3p4/2p5/4P3/5N2/PPPP1PPP/RNBQKB1R w KQkq -": {
+    "san": "d6",
+    "text": "Supports a future ...e5 and opens the light bishop's diagonal; a flexible Najdorf/Scheveningen setup."
+  },
+  "rnbqkbnr/pp2pppp/3p4/2p5/3PP3/5N2/PPP2PPP/RNBQKB1R b KQkq -": {
+    "san": "d4",
+    "text": "Strikes in the center, trading the c-pawn for a half-open d-file and free piece play."
+  },
+  "rnbqkbnr/pp2pppp/3p4/8/3pP3/5N2/PPP2PPP/RNBQKB1R w KQkq -": {
+    "san": "cxd4",
+    "text": "Captures, giving Black the half-open c-file for counterplay against c2 and the queenside."
+  },
+  "rnbqkbnr/pp2pppp/3p4/8/3NP3/8/PPP2PPP/RNBQKB1R b KQkq -": {
+    "san": "Nxd4",
+    "text": "Recaptures with the knight, centralizing it on a strong square."
+  },
+  "rnbqkb1r/pp2pppp/3p1n2/8/3NP3/8/PPP2PPP/RNBQKB1R w KQkq -": {
+    "san": "Nf6",
+    "text": "Develops and attacks e4, forcing White to defend the pawn."
+  },
+  "rnbqkb1r/pp2pppp/3p1n2/8/3NP3/2N5/PPP2PPP/R1BQKB1R b KQkq -": {
+    "san": "Nc3",
+    "text": "Defends e4 and develops, reaching the main Open Sicilian structure."
+  },
+  "rnbqkb1r/1p2pppp/p2p1n2/8/3NP3/2N5/PPP2PPP/R1BQKB1R w KQkq -": {
+    "san": "a6",
+    "text": "The Najdorf move: controls b5, denying White's pieces that square and preparing ...e5 or ...b5 expansion without allowing a knight or bishop to land on b5."
+  },
+  "rnbqkb1r/pp2pp1p/3p1np1/8/3NP3/2N5/PPP2PPP/R1BQKB1R w KQkq -": {
+    "san": "g6",
+    "text": "The Dragon: Black fianchettoes to put the bishop on the long diagonal, aiming it at the center and White's queenside."
+  },
+  "rnbqkb1r/pp2pp1p/3p1np1/8/3NP3/2N1B3/PPP2PPP/R2QKB1R b KQkq -": {
+    "san": "Be3",
+    "text": "Develops and prepares queenside castling with a kingside pawn storm to follow."
+  },
+  "rnbqk2r/pp2ppbp/3p1np1/8/3NP3/2N1B3/PPP2PPP/R2QKB1R w KQkq -": {
+    "san": "Bg7",
+    "text": "Completes the fianchetto; the bishop becomes a powerful long-range attacker."
+  },
+  "rnbqkbnr/pppp1ppp/4p3/8/4P3/8/PPPP1PPP/RNBQKBNR w KQkq -": {
+    "san": "e6",
+    "text": "The French: Black prepares ...d5 to challenge e4 while keeping a solid, if cramped, structure."
+  },
+  "rnbqkbnr/pppp1ppp/4p3/8/3PP3/8/PPP2PPP/RNBQKBNR b KQkq -": {
+    "san": "d4",
+    "text": "Builds the big center, daring Black to strike at it."
+  },
+  "rnbqkbnr/ppp2ppp/4p3/3p4/3PP3/8/PPP2PPP/RNBQKBNR w KQkq -": {
+    "san": "d5",
+    "text": "Challenges e4 directly; the defining French tension."
+  },
+  "rnbqkbnr/ppp2ppp/4p3/3p4/3PP3/2N5/PPP2PPP/R1BQKBNR b KQkq -": {
+    "san": "Nc3",
+    "text": "Defends e4 and develops, keeping the central tension."
+  },
+  "rnbqkb1r/ppp2ppp/4pn2/3p4/3PP3/2N5/PPP2PPP/R1BQKBNR w KQkq -": {
+    "san": "Nf6",
+    "text": "Pressures e4 again, forcing White to resolve the center."
+  },
+  "rnbqkb1r/ppp2ppp/4pn2/3pP3/3P4/2N5/PPP2PPP/R1BQKBNR b KQkq -": {
+    "san": "e5",
+    "text": "Advances and gains space, locking the center and gaining a kingside cramp at the cost of a fixed target on e5/d4."
+  },
+  "rnbqkb1r/pppn1ppp/4p3/3pP3/3P4/2N5/PPP2PPP/R1BQKBNR w KQkq -": {
+    "san": "Nfd7",
+    "text": "Retreats to prepare the freeing ...c5 break against White's pawn chain base on d4."
+  },
+  "rnbqkb1r/pppn1ppp/4p3/3pP3/3P1P2/2N5/PPP3PP/R1BQKBNR b KQkq -": {
+    "san": "f4",
+    "text": "Buttresses e5 and gains kingside space, supporting White's space advantage."
+  },
+  "rnbqkb1r/pp1n1ppp/4p3/2ppP3/3P1P2/2N5/PPP3PP/R1BQKBNR w KQkq -": {
+    "san": "c5",
+    "text": "Black attacks the base of the pawn chain on d4, the thematic French counterstrike."
+  },
+  "rnbqkbnr/pp1ppppp/2p5/8/4P3/8/PPPP1PPP/RNBQKBNR w KQkq -": {
+    "san": "c6",
+    "text": "The Caro-Kann: prepares ...d5 to hit e4 while keeping the light bishop's diagonal open, unlike the French."
+  },
+  "rnbqkbnr/pp1ppppp/2p5/8/3PP3/8/PPP2PPP/RNBQKBNR b KQkq -": {
+    "san": "d4",
+    "text": "Builds the center."
+  },
+  "rnbqkbnr/pp2pppp/2p5/3p4/3PP3/8/PPP2PPP/RNBQKBNR w KQkq -": {
+    "san": "d5",
+    "text": "Challenges e4 with solid support behind it."
+  },
+  "rnbqkbnr/pp2pppp/2p5/3p4/3PP3/2N5/PPP2PPP/R1BQKBNR b KQkq -": {
+    "san": "Nc3",
+    "text": "Develops and defends e4, inviting the classical lines."
+  },
+  "rnbqkbnr/pp2pppp/2p5/8/3Pp3/2N5/PPP2PPP/R1BQKBNR w KQkq -": {
+    "san": "dxe4",
+    "text": "Resolves the tension, handing White the center but gaining easy development and a sound structure."
+  },
+  "rnbqkbnr/pp2pppp/2p5/8/3PN3/8/PPP2PPP/R1BQKBNR b KQkq -": {
+    "san": "Nxe4",
+    "text": "Recaptures, centralizing the knight."
+  },
+  "rn1qkbnr/pp2pppp/2p5/5b2/3PN3/8/PPP2PPP/R1BQKBNR w KQkq -": {
+    "san": "Bf5",
+    "text": "Develops the light bishop actively outside the pawn chain before playing ...e6, a key Caro-Kann advantage over the French."
+  },
+  "rn1qkbnr/pp2pppp/2p5/5b2/3P4/6N1/PPP2PPP/R1BQKBNR b KQkq -": {
+    "san": "Ng3",
+    "text": "Attacks the bishop, forcing it to declare its square."
+  },
+  "rn1qkbnr/pp2pppp/2p3b1/8/3P4/6N1/PPP2PPP/R1BQKBNR w KQkq -": {
+    "san": "Bg6",
+    "text": "Retreats to safety while keeping the bishop on its strong diagonal."
+  },
+  "rnbqkbnr/ppp1pppp/8/3p4/4P3/8/PPPP1PPP/RNBQKBNR w KQkq -": {
+    "san": "d5",
+    "text": "The Scandinavian: Black immediately challenges e4, forcing a resolution before White develops."
+  },
+  "rnbqkbnr/ppp1pppp/8/3P4/8/8/PPPP1PPP/RNBQKBNR b KQkq -": {
+    "san": "exd5",
+    "text": "Accepts the central pawn, the principled try."
+  },
+  "rnb1kbnr/ppp1pppp/8/3q4/8/8/PPPP1PPP/RNBQKBNR w KQkq -": {
+    "san": "Qxd5",
+    "text": "Recaptures immediately, regaining material but exposing the queen to tempo gains."
+  },
+  "rnb1kbnr/ppp1pppp/8/3q4/8/2N5/PPPP1PPP/R1BQKBNR b KQkq -": {
+    "san": "Nc3",
+    "text": "Develops with tempo by attacking the queen, the point of White's setup."
+  },
+  "rnb1kbnr/ppp1pppp/8/q7/8/2N5/PPPP1PPP/R1BQKBNR w KQkq -": {
+    "san": "Qa5",
+    "text": "Retreats to an active square, pinning nothing but eyeing the queenside and staying safe."
+  },
+  "rnb1kbnr/ppp1pppp/8/q7/3P4/2N5/PPP2PPP/R1BQKBNR b KQkq -": {
+    "san": "d4",
+    "text": "Seizes the full center while the queen sits offside."
+  },
+  "rnb1kb1r/ppp1pppp/5n2/q7/3P4/2N5/PPP2PPP/R1BQKBNR w KQkq -": {
+    "san": "Nf6",
+    "text": "Develops and prepares ...c6/...Bf5 with a solid, slightly passive structure."
+  },
+  "rnbqkbnr/pppppppp/8/8/3P4/8/PPP1PPPP/RNBQKBNR b KQkq -": {
+    "san": "d4",
+    "text": "Claims the center on the queenside and opens lines for the dark bishop and queen."
+  },
+  "rnbqkbnr/ppp1pppp/8/3p4/3P4/8/PPP1PPPP/RNBQKBNR w KQkq -": {
+    "san": "d5",
+    "text": "Symmetrical central stake."
+  },
+  "rnbqkbnr/ppp1pppp/8/3p4/2PP4/8/PP2PPPP/RNBQKBNR b KQkq -": {
+    "san": "c4",
+    "text": "The Queen's Gambit: offers the c-pawn to deflect Black's d5 and dominate the center."
+  },
+  "rnbqkbnr/ppp2ppp/4p3/3p4/2PP4/8/PP2PPPP/RNBQKBNR w KQkq -": {
+    "san": "e6",
+    "text": "Declines the gambit, solidifying d5 — at the cost of temporarily blocking in the c8 bishop."
+  },
+  "rnbqkbnr/ppp2ppp/4p3/3p4/2PP4/2N5/PP2PPPP/R1BQKBNR b KQkq -": {
+    "san": "Nc3",
+    "text": "Develops and adds pressure to d5."
+  },
+  "rnbqkb1r/ppp2ppp/4pn2/3p4/2PP4/2N5/PP2PPPP/R1BQKBNR w KQkq -": {
+    "san": "Nf6",
+    "text": "Develops and defends d5 against the mounting pressure."
+  },
+  "rnbqkb1r/ppp2ppp/4pn2/3p2B1/2PP4/2N5/PP2PPPP/R2QKBNR b KQkq -": {
+    "san": "Bg5",
+    "text": "Pins the f6 knight, increasing pressure on d5 by undermining its defender."
+  },
+  "rnbqk2r/ppp1bppp/4pn2/3p2B1/2PP4/2N5/PP2PPPP/R2QKBNR w KQkq -": {
+    "san": "Be7",
+    "text": "Breaks the pin's sting and prepares to castle, a solid classical setup."
+  },
+  "rnbqk2r/ppp1bppp/4pn2/3p2B1/2PP4/2N1P3/PP3PPP/R2QKBNR b KQkq -": {
+    "san": "e3",
+    "text": "Opens the f1 bishop's path and supports d4, a flexible, sound build."
+  },
+  "rnbq1rk1/ppp1bppp/4pn2/3p2B1/2PP4/2N1P3/PP3PPP/R2QKBNR w KQ -": {
+    "san": "O-O",
+    "text": "Black castles into safety, completing kingside development."
+  },
+  "rnbqkbnr/ppp1pppp/8/8/2pP4/8/PP2PPPP/RNBQKBNR w KQkq -": {
+    "san": "dxc4",
+    "text": "Accepts the pawn, conceding the center temporarily to develop freely and target the c-file later."
+  },
+  "rnbqkbnr/ppp1pppp/8/8/2pP4/5N2/PP2PPPP/RNBQKB1R b KQkq -": {
+    "san": "Nf3",
+    "text": "Develops and controls e5, discouraging ...e5 before White regains the pawn."
+  },
+  "rnbqkb1r/ppp1pppp/5n2/8/2pP4/5N2/PP2PPPP/RNBQKB1R w KQkq -": {
+    "san": "Nf6",
+    "text": "Develops and eyes the center without rushing to defend the extra c4 pawn, which is hard to hold."
+  },
+  "rnbqkb1r/ppp1pppp/5n2/8/2pP4/4PN2/PP3PPP/RNBQKB1R b KQkq -": {
+    "san": "e3",
+    "text": "Opens the bishop's path to recapture on c4 and supports the center."
+  },
+  "rnbqkb1r/ppp2ppp/4pn2/8/2pP4/4PN2/PP3PPP/RNBQKB1R w KQkq -": {
+    "san": "e6",
+    "text": "Frees the king's bishop and prepares ...c5 to challenge d4."
+  },
+  "rnbqkb1r/ppp2ppp/4pn2/8/2BP4/4PN2/PP3PPP/RNBQK2R b KQkq -": {
+    "san": "Bxc4",
+    "text": "Regains the gambit pawn, the bishop landing on an active diagonal toward f7."
+  },
+  "rnbqkbnr/pp2pppp/2p5/3p4/2PP4/8/PP2PPPP/RNBQKBNR w KQkq -": {
+    "san": "c6",
+    "text": "The Slav: supports d5 with a pawn while keeping the c8 bishop's diagonal open, solving the QGD's bad-bishop problem."
+  },
+  "rnbqkbnr/pp2pppp/2p5/3p4/2PP4/5N2/PP2PPPP/RNBQKB1R b KQkq -": {
+    "san": "Nf3",
+    "text": "Develops and controls e5."
+  },
+  "rnbqkb1r/pp2pppp/2p2n2/3p4/2PP4/5N2/PP2PPPP/RNBQKB1R w KQkq -": {
+    "san": "Nf6",
+    "text": "Develops and defends d5."
+  },
+  "rnbqkb1r/pp2pppp/2p2n2/3p4/2PP4/2N2N2/PP2PPPP/R1BQKB1R b KQkq -": {
+    "san": "Nc3",
+    "text": "Develops and pressures d5."
+  },
+  "rnbqkb1r/pp2pppp/2p2n2/8/2pP4/2N2N2/PP2PPPP/R1BQKB1R w KQkq -": {
+    "san": "dxc4",
+    "text": "Grabs the pawn, planning ...b5 to hold it or ...Bf5 with free development — the open-diagonal point of the Slav."
+  },
+  "rnbqkb1r/pp2pppp/2p2n2/8/P1pP4/2N2N2/1P2PPPP/R1BQKB1R b KQkq -": {
+    "san": "a4",
+    "text": "Stops ...b5, fighting to recover the c4 pawn at the cost of weakening b4."
+  },
+  "rn1qkb1r/pp2pppp/2p2n2/5b2/P1pP4/2N2N2/1P2PPPP/R1BQKB1R w KQkq -": {
+    "san": "Bf5",
+    "text": "Develops the bishop actively outside the chain before ...e6, the Slav's key asset."
+  },
+  "rnbqkbnr/ppp1pppp/8/3p4/3P4/5N2/PPP1PPPP/RNBQKB1R b KQkq -": {
+    "san": "Nf3",
+    "text": "Develops and controls e5 without committing the c-pawn."
+  },
+  "rnbqkb1r/ppp1pppp/5n2/3p4/3P4/5N2/PPP1PPPP/RNBQKB1R w KQkq -": {
+    "san": "Nf6",
+    "text": "Mirrors, developing and contesting e5."
+  },
+  "rnbqkb1r/ppp1pppp/5n2/3p4/3P1B2/5N2/PPP1PPPP/RN1QKB1R b KQkq -": {
+    "san": "Bf4",
+    "text": "The London System: develops the bishop outside the pawn chain to a strong square before playing e3, avoiding the QGD's bad bishop."
+  },
+  "rnbqkb1r/ppp2ppp/4pn2/3p4/3P1B2/5N2/PPP1PPPP/RN1QKB1R w KQkq -": {
+    "san": "e6",
+    "text": "Solid setup freeing the king's bishop and preparing to castle."
+  },
+  "rnbqkb1r/ppp2ppp/4pn2/3p4/3P1B2/4PN2/PPP2PPP/RN1QKB1R b KQkq -": {
+    "san": "e3",
+    "text": "Solidifies d4, opens the f1 bishop, and completes the London pawn triangle."
+  },
+  "rnbqk2r/ppp2ppp/3bpn2/3p4/3P1B2/4PN2/PPP2PPP/RN1QKB1R w KQkq -": {
+    "san": "Bd6",
+    "text": "Offers to trade the strong London bishop or challenge the f4 square."
+  },
+  "rnbqk2r/ppp2ppp/3bpn2/3p4/3P4/4PNB1/PPP2PPP/RN1QKB1R b KQkq -": {
+    "san": "Bg3",
+    "text": "Sidesteps the trade, keeping the bishop on its active diagonal."
+  },
+  "rnbqkb1r/pppppppp/5n2/8/3P4/8/PPP1PPPP/RNBQKBNR w KQkq -": {
+    "san": "Nf6",
+    "text": "Controls e4 and develops, declining to commit pawns in the center yet — a hypermodern approach."
+  },
+  "rnbqkb1r/pppppppp/5n2/8/2PP4/8/PP2PPPP/RNBQKBNR b KQkq -": {
+    "san": "c4",
+    "text": "Grabs more central space, the Queen's Gambit family setup."
+  },
+  "rnbqkb1r/pppppp1p/5np1/8/2PP4/8/PP2PPPP/RNBQKBNR w KQkq -": {
+    "san": "g6",
+    "text": "Prepares the fianchetto, the King's Indian signature: Black cedes the center to attack it later with pieces and pawn breaks."
+  },
+  "rnbqkb1r/pppppp1p/5np1/8/2PP4/2N5/PP2PPPP/R1BQKBNR b KQkq -": {
+    "san": "Nc3",
+    "text": "Develops and reinforces e4/d5 control."
+  },
+  "rnbqk2r/ppppppbp/5np1/8/2PP4/2N5/PP2PPPP/R1BQKBNR w KQkq -": {
+    "san": "Bg7",
+    "text": "Completes the fianchetto, the bishop bearing down the long diagonal toward d4."
+  },
+  "rnbqk2r/ppppppbp/5np1/8/2PPP3/2N5/PP3PPP/R1BQKBNR b KQkq -": {
+    "san": "e4",
+    "text": "Builds the full broad center, accepting the challenge to defend it against ...e5 and ...c5 breaks."
+  },
+  "rnbqk2r/ppp1ppbp/3p1np1/8/2PPP3/2N5/PP3PPP/R1BQKBNR w KQkq -": {
+    "san": "d6",
+    "text": "Supports a future ...e5 and opens the light bishop, the classical KID setup."
+  },
+  "rnbqk2r/ppp1ppbp/3p1np1/8/2PPP3/2N2N2/PP3PPP/R1BQKB1R b KQkq -": {
+    "san": "Nf3",
+    "text": "Develops and guards e5/d4 before castling."
+  },
+  "rnbq1rk1/ppp1ppbp/3p1np1/8/2PPP3/2N2N2/PP3PPP/R1BQKB1R w KQ -": {
+    "san": "O-O",
+    "text": "Black castles, ready to strike the center with ...e5."
+  },
+  "rnbqkb1r/pppp1ppp/4pn2/8/2PP4/8/PP2PPPP/RNBQKBNR w KQkq -": {
+    "san": "e6",
+    "text": "Frees the king's bishop and prepares either ...d5 or ...Bb4."
+  },
+  "rnbqkb1r/pppp1ppp/4pn2/8/2PP4/2N5/PP2PPPP/R1BQKBNR b KQkq -": {
+    "san": "Nc3",
+    "text": "Develops and fights for e4 and d5."
+  },
+  "rnbqk2r/pppp1ppp/4pn2/8/1bPP4/2N5/PP2PPPP/R1BQKBNR w KQkq -": {
+    "san": "Bb4",
+    "text": "The Nimzo-Indian: pins the knight defending e4, fighting for the center with pieces and threatening to double White's pawns via ...Bxc3."
+  },
+  "rnbqk2r/pppp1ppp/4pn2/8/1bPP4/2N1P3/PP3PPP/R1BQKBNR b KQkq -": {
+    "san": "e3",
+    "text": "The Rubinstein: a flexible, solid move opening the bishop and supporting d4 while awaiting Black's plan."
+  },
+  "rnbq1rk1/pppp1ppp/4pn2/8/1bPP4/2N1P3/PP3PPP/R1BQKBNR w KQ -": {
+    "san": "O-O",
+    "text": "Black castles, completing kingside safety before resolving the central tension."
+  },
+  "rnbqkb1r/pppp1ppp/4pn2/8/2PP4/5N2/PP2PPPP/RNBQKB1R b KQkq -": {
+    "san": "Nf3",
+    "text": "Develops and controls e5, sidestepping the Nimzo pin."
+  },
+  "rnbqkb1r/p1pp1ppp/1p2pn2/8/2PP4/5N2/PP2PPPP/RNBQKB1R w KQkq -": {
+    "san": "b6",
+    "text": "The Queen's Indian: prepares to fianchetto the light bishop to contest e4 along the long diagonal, since White avoided Nc3."
+  },
+  "rnbqkb1r/p1pp1ppp/1p2pn2/8/2PP4/5NP1/PP2PP1P/RNBQKB1R b KQkq -": {
+    "san": "g3",
+    "text": "Prepares White's own fianchetto to neutralize the long diagonal and fight for the light squares."
+  },
+  "rn1qkb1r/pbpp1ppp/1p2pn2/8/2PP4/5NP1/PP2PP1P/RNBQKB1R w KQkq -": {
+    "san": "Bb7",
+    "text": "Completes the fianchetto, the bishop pressuring e4 from afar."
+  },
+  "rn1qkb1r/pbpp1ppp/1p2pn2/8/2PP4/5NP1/PP2PPBP/RNBQK2R b KQkq -": {
+    "san": "Bg2",
+    "text": "Contests the long diagonal and prepares to castle, a harmonious setup."
+  },
+  "rn1qk2r/pbppbppp/1p2pn2/8/2PP4/5NP1/PP2PPBP/RNBQK2R w KQkq -": {
+    "san": "Be7",
+    "text": "A flexible developing move preparing to castle."
+  },
+  "rnbqkbnr/pppppppp/8/8/2P5/8/PP1PPPPP/RNBQKBNR b KQkq -": {
+    "san": "c4",
+    "text": "The English: stakes out d5 from the flank, a flexible reversed-Sicilian approach that delays central commitment."
+  },
+  "rnbqkbnr/pppp1ppp/8/4p3/2P5/8/PP1PPPPP/RNBQKBNR w KQkq -": {
+    "san": "e5",
+    "text": "Black seizes the center, mirroring as if playing a Sicilian a tempo up."
+  },
+  "rnbqkbnr/pppp1ppp/8/4p3/2P5/2N5/PP1PPPPP/R1BQKBNR b KQkq -": {
+    "san": "Nc3",
+    "text": "Develops and fights for d5, the key contested square."
+  },
+  "rnbqkb1r/pppp1ppp/5n2/4p3/2P5/2N5/PP1PPPPP/R1BQKBNR w KQkq -": {
+    "san": "Nf6",
+    "text": "Develops and contests e4/d5 in turn."
+  },
+  "rnbqkb1r/pppp1ppp/5n2/4p3/2P5/2N2N2/PP1PPPPP/R1BQKB1R b KQkq -": {
+    "san": "Nf3",
+    "text": "Develops and attacks e5, gaining a tempo."
+  },
+  "r1bqkb1r/pppp1ppp/2n2n2/4p3/2P5/2N2N2/PP1PPPPP/R1BQKB1R w KQkq -": {
+    "san": "Nc6",
+    "text": "Defends e5 and develops naturally."
+  },
+  "r1bqkb1r/pppp1ppp/2n2n2/4p3/2P5/2N2NP1/PP1PPP1P/R1BQKB1R b KQkq -": {
+    "san": "g3",
+    "text": "Prepares the fianchetto to pressure d5 and the long light diagonal, the English's thematic plan."
+  },
+  "r1bqkb1r/ppp2ppp/2n2n2/3pp3/2P5/2N2NP1/PP1PPP1P/R1BQKB1R w KQkq -": {
+    "san": "d5",
+    "text": "Black strikes back in the center, gaining space and challenging White's setup."
+  },
+  "rnbqkb1r/pppp1ppp/4pn2/8/2PP4/6P1/PP2PP1P/RNBQKBNR b KQkq -": {
+    "san": "g3",
+    "text": "The Catalan: prepares the fianchetto to exert long-range pressure on the queenside light squares and the c4/d5 complex."
+  },
+  "rnbqkb1r/ppp2ppp/4pn2/3p4/2PP4/6P1/PP2PP1P/RNBQKBNR w KQkq -": {
+    "san": "d5",
+    "text": "Black challenges the center, leaning on the c4 pawn."
+  },
+  "rnbqkb1r/ppp2ppp/4pn2/3p4/2PP4/6P1/PP2PPBP/RNBQK1NR b KQkq -": {
+    "san": "Bg2",
+    "text": "Completes the fianchetto, the bishop becoming a long-term asset bearing on d5 and the queenside."
+  },
+  "rnbqk2r/ppp1bppp/4pn2/3p4/2PP4/6P1/PP2PPBP/RNBQK1NR w KQkq -": {
+    "san": "Be7",
+    "text": "A solid developing move preparing to castle into the Closed Catalan."
+  },
+  "rnbqk2r/ppp1bppp/4pn2/3p4/2PP4/5NP1/PP2PPBP/RNBQK2R b KQkq -": {
+    "san": "Nf3",
+    "text": "Develops and controls e5 before castling."
+  },
+  "rnbq1rk1/ppp1bppp/4pn2/3p4/2PP4/5NP1/PP2PPBP/RNBQK2R w KQ -": {
+    "san": "O-O",
+    "text": "Black castles, ready to resolve the central tension with ...dxc4 or ...c6."
+  },
+  "rnbqkbnr/ppp1pppp/3p4/8/4P3/8/PPPP1PPP/RNBQKBNR w KQkq -": {
+    "san": "d6",
+    "text": "The Pirc/Modern setup: Black prepares ...Nf6 and ...g6, ceding the center to attack it later, hypermodern style."
+  },
+  "rnbqkbnr/ppp1pppp/3p4/8/3PP3/8/PPP2PPP/RNBQKBNR b KQkq -": {
+    "san": "d4",
+    "text": "Builds the broad center White is invited to overextend."
+  },
+  "rnbqkb1r/ppp1pppp/3p1n2/8/3PP3/8/PPP2PPP/RNBQKBNR w KQkq -": {
+    "san": "Nf6",
+    "text": "Attacks e4, forcing White to defend and develop."
+  },
+  "rnbqkb1r/ppp1pppp/3p1n2/8/3PP3/2N5/PPP2PPP/R1BQKBNR b KQkq -": {
+    "san": "Nc3",
+    "text": "Defends e4 and develops toward the center."
+  },
+  "rnbqkb1r/ppp1pp1p/3p1np1/8/3PP3/2N5/PPP2PPP/R1BQKBNR w KQkq -": {
+    "san": "g6",
+    "text": "Prepares the fianchetto, aiming the bishop at White's center along the long diagonal."
+  },
+  "rnbqkb1r/ppp1pp1p/3p1np1/8/3PP3/2N2N2/PPP2PPP/R1BQKB1R b KQkq -": {
+    "san": "Nf3",
+    "text": "Develops and guards e5/d4, a solid Classical setup."
+  },
+  "rnbqk2r/ppp1ppbp/3p1np1/8/3PP3/2N2N2/PPP2PPP/R1BQKB1R w KQkq -": {
+    "san": "Bg7",
+    "text": "Completes the fianchetto, pressuring d4 and the center."
+  },
+  "rnbqkbnr/pppppp1p/6p1/8/4P3/8/PPPP1PPP/RNBQKBNR w KQkq -": {
+    "san": "g6",
+    "text": "The Modern: an immediate fianchetto, ceding the center to counterattack it with pieces and timely pawn breaks."
+  },
+  "rnbqkbnr/pppppp1p/6p1/8/3PP3/8/PPP2PPP/RNBQKBNR b KQkq -": {
+    "san": "d4",
+    "text": "Occupies the full center, accepting the invitation to expand."
+  },
+  "rnbqk1nr/ppppppbp/6p1/8/3PP3/8/PPP2PPP/RNBQKBNR w KQkq -": {
+    "san": "Bg7",
+    "text": "Develops the bishop to the long diagonal, eyeing d4 and the center."
+  },
+  "rnbqk1nr/ppppppbp/6p1/8/3PP3/2N5/PPP2PPP/R1BQKBNR b KQkq -": {
+    "san": "Nc3",
+    "text": "Develops and supports e4/d5."
+  },
+  "rnbqk1nr/ppp1ppbp/3p2p1/8/3PP3/2N5/PPP2PPP/R1BQKBNR w KQkq -": {
+    "san": "d6",
+    "text": "Supports a later ...e5 and opens the light bishop, a flexible Modern structure."
+  },
+  "r1bqkbnr/pppp1ppp/2n5/4p3/3PP3/5N2/PPP2PPP/RNBQKB1R b KQkq -": {
+    "san": "d4",
+    "text": "The Scotch: strikes the center at once, opening lines before Black completes development."
+  },
+  "r1bqkbnr/pppp1ppp/2n5/8/3pP3/5N2/PPP2PPP/RNBQKB1R w KQkq -": {
+    "san": "exd4",
+    "text": "Captures to win central space; declining leaves White a strong center."
+  },
+  "r1bqkbnr/pppp1ppp/2n5/8/3NP3/8/PPP2PPP/RNBQKB1R b KQkq -": {
+    "san": "Nxd4",
+    "text": "Recaptures, centralizing the knight on a dominant square."
+  },
+  "r1bqk1nr/pppp1ppp/2n5/2b5/3NP3/8/PPP2PPP/RNBQKB1R w KQkq -": {
+    "san": "Bc5",
+    "text": "Develops with pressure on d4, attacking the centralized knight."
+  },
+  "rnbqkbnr/pppp1ppp/8/4p3/4P3/2N5/PPPP1PPP/R1BQKBNR b KQkq -": {
+    "san": "Nc3",
+    "text": "The Vienna: develops the knight and supports a later f4 break, a flexible alternative to Nf3."
+  },
+  "rnbqkb1r/pppp1ppp/5n2/4p3/4P3/2N5/PPPP1PPP/R1BQKBNR w KQkq -": {
+    "san": "Nf6",
+    "text": "Develops and attacks e4, the most testing reply."
+  },
+  "rnbqkb1r/pppp1ppp/5n2/4p3/4PP2/2N5/PPPP2PP/R1BQKBNR b KQkq -": {
+    "san": "f4",
+    "text": "The Vienna Gambit: strikes at e5 to open lines and seize the initiative on the kingside."
+  },
+  "rnbqkb1r/ppp2ppp/5n2/3pp3/4PP2/2N5/PPPP2PP/R1BQKBNR w KQkq -": {
+    "san": "d5",
+    "text": "Black counters in the center, the principled response that frees his game."
+  },
+  "rnbqkb1r/pppp1ppp/5n2/4p3/4P3/5N2/PPPP1PPP/RNBQKB1R w KQkq -": {
+    "san": "Nf6",
+    "text": "The Petroff: instead of defending e5, Black counterattacks e4, aiming for symmetry and solidity."
+  },
+  "rnbqkb1r/pppp1ppp/5n2/4N3/4P3/8/PPPP1PPP/RNBQKB1R b KQkq -": {
+    "san": "Nxe5",
+    "text": "Grabs the pawn; capturing back immediately would walk into a tempo-losing trap."
+  },
+  "rnbqkb1r/ppp2ppp/3p1n2/4N3/4P3/8/PPPP1PPP/RNBQKB1R w KQkq -": {
+    "san": "d6",
+    "text": "Dislodges the knight before recapturing, the accurate move order."
+  },
+  "rnbqkb1r/ppp2ppp/3p1n2/8/4P3/5N2/PPPP1PPP/RNBQKB1R b KQkq -": {
+    "san": "Nf3",
+    "text": "Retreats to safety, controlling the center."
+  },
+  "rnbqkb1r/ppp2ppp/3p4/8/4n3/5N2/PPPP1PPP/RNBQKB1R w KQkq -": {
+    "san": "Nxe4",
+    "text": "Recaptures, restoring material balance in the symmetrical Petroff structure."
+  },
+  "rnbqkb1r/ppp2ppp/3p4/8/3Pn3/5N2/PPP2PPP/RNBQKB1R b KQkq -": {
+    "san": "d4",
+    "text": "Opens the center and gains space, the main try for an edge."
+  },
+  "rnbqkb1r/ppp2ppp/8/3p4/3Pn3/5N2/PPP2PPP/RNBQKB1R w KQkq -": {
+    "san": "d5",
+    "text": "Supports the e4 knight and stakes a central claim, equalizing space."
+  },
+  "rnbqkbnr/ppppp1pp/8/5p2/3P4/8/PPP1PPPP/RNBQKBNR w KQkq -": {
+    "san": "f5",
+    "text": "The Dutch: Black grabs kingside space and control of e4, fighting for the initiative at the cost of slight king weakening."
+  },
+  "rnbqkbnr/ppppp1pp/8/5p2/3P4/6P1/PPP1PP1P/RNBQKBNR b KQkq -": {
+    "san": "g3",
+    "text": "Prepares the fianchetto to contest the long light diagonal Black has weakened, the main antidote."
+  },
+  "rnbqkb1r/ppppp1pp/5n2/5p2/3P4/6P1/PPP1PP1P/RNBQKBNR w KQkq -": {
+    "san": "Nf6",
+    "text": "Develops and reinforces control of e4."
+  },
+  "rnbqkb1r/ppppp1pp/5n2/5p2/3P4/6P1/PPP1PPBP/RNBQK1NR b KQkq -": {
+    "san": "Bg2",
+    "text": "Completes the fianchetto, pressuring the center and queenside."
+  },
+  "rnbqkb1r/pppp2pp/4pn2/5p2/3P4/6P1/PPP1PPBP/RNBQK1NR w KQkq -": {
+    "san": "e6",
+    "text": "Frees the king's bishop and prepares a Classical Dutch setup with ...Be7 and ...d6."
+  }
+}

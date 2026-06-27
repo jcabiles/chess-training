@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <!-- Declare the page handles its own dark theme so Chrome's "Auto Dark Mode
+       for Web Contents" doesn't force-invert images (which turns the black SVG
+       pieces white). -->
+  <meta name="color-scheme" content="dark light" />
+  <title>Stockfish Analysis Board</title>
+
+  <!--
+    TODO(vendor): these load chessground + chessops from a CDN so the app runs
+    immediately. To go fully offline, download them into static/vendor/ and
+    switch these URLs to local paths. The browser fetches these at runtime —
+    needs internet the first time (then cached).
+  -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/chessground@9.1.1/assets/chessground.base.css" />
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/chessground@9.1.1/assets/chessground.brown.css" />
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/chessground@9.1.1/assets/chessground.cburnett.css" />
+  <link rel="stylesheet" href="/static/style.css" />
+</head>
+<body>
+  <header>
+    <h1>Stockfish Analysis Board</h1>
+    <p class="sub">Move both colors freely. Stockfish evaluates every move.</p>
+  </header>
+
+  <main>
+    <section class="board-col">
+      <div id="board"></div>
+
+      <div class="controls">
+        <button id="undo" title="Step back">&#8592; Undo</button>
+        <button id="redo" title="Step forward">Redo &#8594;</button>
+        <button id="flip" title="Flip board">&#8635; Flip</button>
+        <button id="reset" title="Back to start">Reset</button>
+        <button id="setup-toggle" title="Set up a position freely">&#9874; Set up position</button>
+      </div>
+
+      <div class="fen-row">
+        <input id="fen-input" type="text" placeholder="Paste a FEN to jump to a position…" />
+        <button id="load-fen">Load</button>
+      </div>
+      <div id="fen-error" class="error" hidden></div>
+
+      <!-- Setup (pregame) editor — shown only in setup mode -->
+      <div id="setup-bar" class="setup-bar" hidden>
+        <div class="setup-hint">Drag pieces to rearrange · drag off-board to delete · pick a piece below to stamp it onto squares</div>
+
+        <div id="palette" class="palette">
+          <button data-tool="move" class="tool active" title="Move / drag pieces">&#10021; Move</button>
+          <span class="palette-set">
+            <button data-piece="wK" title="White king">&#9812;</button>
+            <button data-piece="wQ" title="White queen">&#9813;</button>
+            <button data-piece="wR" title="White rook">&#9814;</button>
+            <button data-piece="wB" title="White bishop">&#9815;</button>
+            <button data-piece="wN" title="White knight">&#9816;</button>
+            <button data-piece="wP" title="White pawn">&#9817;</button>
+          </span>
+          <span class="palette-set dark">
+            <button data-piece="bK" title="Black king">&#9818;</button>
+            <button data-piece="bQ" title="Black queen">&#9819;</button>
+            <button data-piece="bR" title="Black rook">&#9820;</button>
+            <button data-piece="bB" title="Black bishop">&#9821;</button>
+            <button data-piece="bN" title="Black knight">&#9822;</button>
+            <button data-piece="bP" title="Black pawn">&#9823;</button>
+          </span>
+          <button data-tool="erase" class="tool" title="Erase pieces">&#9003; Erase</button>
+        </div>
+
+        <div class="setup-row">
+          <span class="setup-label">Side to move:</span>
+          <button id="side-white" class="seg active">White</button>
+          <button id="side-black" class="seg">Black</button>
+          <span class="setup-spacer"></span>
+          <button id="empty-board" title="Clear the board">Empty</button>
+          <button id="start-pos" title="Reset to the starting array">Start</button>
+        </div>
+
+        <div class="setup-actions">
+          <button id="begin-game" class="primary">Begin Game</button>
+          <button id="cancel-setup">Cancel</button>
+        </div>
+        <div id="setup-error" class="error" hidden></div>
+      </div>
+
+      <!-- Study walkthrough — shown only in study mode -->
+      <div id="study-bar" class="study-bar" hidden>
+        <div class="study-header">
+          <span id="study-title" class="study-title">Studying</span>
+          <button id="study-return">Return to my game</button>
+        </div>
+        <div class="study-stepper">
+          <button id="study-first" title="First">&#9198;</button>
+          <button id="study-prev">&#9664; Prev</button>
+          <span id="study-step" class="study-step">0 / 0</span>
+          <button id="study-next">Next &#9654;</button>
+          <button id="study-last" title="Last">&#9197;</button>
+        </div>
+        <div class="study-move">
+          <span id="study-move-san" class="study-move-san">—</span>
+          <span id="study-eval" class="study-eval"></span>
+        </div>
+        <div id="study-commentary" class="study-commentary">—</div>
+      </div>
+    </section>
+
+    <aside class="panel">
+      <div class="eval-block">
+        <div class="eval-label">Evaluation</div>
+        <div id="eval" class="eval">—</div>
+      </div>
+
+      <div class="quality-block">
+        <div class="eval-label">Last move</div>
+        <div id="quality" class="quality">—</div>
+      </div>
+
+      <div class="best-block">
+        <div class="eval-label">Best move</div>
+        <div id="best-move" class="best-move">—</div>
+        <div class="eval-label">Best line</div>
+        <div id="pv" class="pv">—</div>
+      </div>
+
+      <div class="opening-block">
+        <div class="eval-label">Opening</div>
+        <div id="opening-name" class="opening-name">—</div>
+        <div class="eval-label">Explore from here</div>
+        <input id="opening-filter" type="text" placeholder="Filter openings…" />
+        <div id="opening-candidates" class="opening-candidates"></div>
+        <div id="opening-truncated" class="opening-truncated" hidden></div>
+      </div>
+
+      <div id="status" class="status"></div>
+    </aside>
+  </main>
+
+  <!-- Promotion picker overlay -->
+  <div id="promo-overlay" class="promo-overlay" hidden>
+    <div class="promo-box">
+      <div class="promo-title">Promote to:</div>
+      <div class="promo-choices">
+        <button data-piece="q">&#9819; Queen</button>
+        <button data-piece="r">&#9820; Rook</button>
+        <button data-piece="b">&#9821; Bishop</button>
+        <button data-piece="n">&#9822; Knight</button>
+      </div>
+    </div>
+  </div>
+
+  <script type="module" src="/static/app.js"></script>
+</body>
+</html>

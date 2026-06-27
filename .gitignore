@@ -1,0 +1,30 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.pytest_cache/
+.venv/
+venv/
+env/
+
+# OS / editor
+.DS_Store
+.idea/
+.vscode/
+
+# Local config
+*.local
+.claude/settings.json
+.claude/settings.local.json
+.claude/*.bak*
+SETUP-SANDBOX.md
+
+# Dev/debug artifacts
+.playwright-mcp/
+board-debug.png
+layout-check.png
+setup-mode.png
+
+# Local dev-server runtime (managed by scripts/serve.sh)
+.server.pid
+.server.log

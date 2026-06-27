@@ -1,0 +1,9 @@
+eco	name	pgn	uci	epd
+A00	Polish Opening	1. b4	b2b4	rnbqkbnr/pppppppp/8/8/1P6/8/P1PPPPPP/RNBQKBNR b KQkq -
+B02	Alekhine's Defense	1. e4 Nf6	e2e4 g8f6	rnbqkb1r/pppppppp/5n2/8/4P3/8/PPPP1PPP/RNBQKBNR w KQkq -
+C20	King's Pawn Game: Center Game	1. e4 e5 2. d4	e2e4 e7e5 d2d4	rnbqkbnr/pppp1ppp/8/4p3/3PP3/8/PPP2PPP/RNBQKBNR b KQkq -
+C60	Ruy Lopez	1. e4 e5 2. Nf3 Nc6 3. Bb5	e2e4 e7e5 g1f3 b8c6 f1b5	r1bqkbnr/pppp1ppp/2n5/1B2p3/4P3/5N2/PPPP1PPP/RNBQK2R b KQkq -
+C65	Ruy Lopez: Berlin Defense	1. e4 e5 2. Nf3 Nc6 3. Bb5 Nf6	e2e4 e7e5 g1f3 b8c6 f1b5 g8f6	r1bqkb1r/pppp1ppp/2n2n2/1B2p3/4P3/5N2/PPPP1PPP/RNBQK2R w KQkq -
+C50	Italian Game	1. e4 e5 2. Nf3 Nc6 3. Bc4	e2e4 e7e5 g1f3 b8c6 f1c4	r1bqkbnr/pppp1ppp/2n5/4p3/2B1P3/5N2/PPPP1PPP/RNBQK2R b KQkq -
+C01	French Defense: Exchange Variation	1. e4 e6 2. d4 d5 3. exd5	e2e4 e7e6 d2d4 d7d5 e4d5	rnbqkbnr/ppp2ppp/4p3/3P4/3P4/8/PPP2PPP/RNBQKBNR b KQkq -
+C44	King's Pawn Game: EP line	1. e4 d5 2. e5 f5	e2e4 d7d5 e4e5 f7f5	rnbqkbnr/ppp1p1pp/8/3pPp2/8/8/PPPP1PPP/RNBQKBNR w KQkq f6
