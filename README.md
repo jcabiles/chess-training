@@ -54,6 +54,14 @@ The opening trainer uses the bundled lichess-org/chess-openings TSVs under
 - **Opening trainer:** the panel names the opening of your current line and lists
   named openings reachable from here. Click one to **study** it — step through the
   moves on the board with the eval and a note on the idea behind each move.
+- **Opening Traps:** browse a curated set of beginner opening traps (filter by name
+  or color). **Watch mode** steps through a trap line with eval + coaching notes;
+  the branch point shows the expected mistake and what Black (or White) should do
+  instead. **Practice mode** lets you play the trapping side while the opponent
+  plays the standard blunder — find the punishing moves (wrong moves revert; "Reveal"
+  hints, "Show refutation" gives the defense). A **Trap available** chip appears
+  during play when you reach a known trap's starting position. Data lives in
+  `data/traps.json` (engine-verified, original commentary; 11 traps shipped).
 
 ## Develop / test
 ```sh

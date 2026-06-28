@@ -26,7 +26,7 @@ from fastapi import Depends, FastAPI, Request
 from fastapi.responses import FileResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
 
-from app import openings
+from app import openings, traps
 from app.analysis import classify, pov_score_to_white_cp
 from app.engine import AnalysisResult, EngineUnavailable, StockfishEngine
 from app.models import (
@@ -39,6 +39,7 @@ from app.models import (
     MoveRequest,
     MoveResponse,
     OpeningRequest,
+    TrapsCheckRequest,
 )
 
 logger = logging.getLogger("chess_training")
@@ -48,6 +49,7 @@ STATIC_DIR = BASE_DIR / "static"
 INDEX_HTML = STATIC_DIR / "index.html"
 OPENINGS_DIR = BASE_DIR / "data" / "openings"
 COMMENTARY_FILE = BASE_DIR / "data" / "commentary.json"
+TRAPS_FILE = BASE_DIR / "data" / "traps.json"
 
 
 def _load_commentary() -> dict:
@@ -83,6 +85,7 @@ async def lifespan(app: FastAPI):
     # Opening trainer data (both degrade gracefully if files are absent).
     openings.init(str(OPENINGS_DIR))
     app.state.commentary = _load_commentary()
+    traps.init(str(TRAPS_FILE))
 
     try:
         yield
@@ -258,6 +261,45 @@ async def opening_commentary(req: CommentaryRequest, request: Request):
     """Bundled 'why this move' commentary for a position (EPD lookup), or null."""
     commentary = getattr(request.app.state, "commentary", {}) or {}
     return openings.commentary_lookup(req.fen, commentary)
+
+
+# ---------------------------------------------------------------------------
+# Opening traps (additive; degrade gracefully when data is absent)
+# ---------------------------------------------------------------------------
+@app.get("/api/traps")
+async def list_traps():
+    """Browse list of all trap summaries (id, name, color, eco, parentOpening, commonness).
+
+    Always returns a well-formed body; empty list when data is absent.
+    """
+    return {"traps": traps.summaries()}
+
+
+# IMPORTANT: this POST /api/traps/check route is registered BEFORE the
+# GET /api/traps/{trap_id} route so FastAPI never matches the literal path
+# "/api/traps/check" as trap_id="check".
+@app.post("/api/traps/check")
+async def check_traps(req: TrapsCheckRequest):
+    """Return trap summaries whose start EPD matches the current position.
+
+    Server derives all EPDs from baseFen + UCI moves (the client never sends
+    EPDs). Always returns a well-formed body; empty/degraded when data is absent.
+    Never 500.
+    """
+    try:
+        available = traps.available(req.baseFen, req.moves)
+    except Exception:
+        available = []
+    return {"available": available}
+
+
+@app.get("/api/traps/{trap_id}")
+async def get_trap(trap_id: str):
+    """Return the full trap object for trap_id, or 404 if unknown."""
+    trap = traps.get(trap_id)
+    if trap is None:
+        return JSONResponse(status_code=404, content={"detail": f"Trap {trap_id!r} not found."})
+    return trap
 
 
 # ---------------------------------------------------------------------------

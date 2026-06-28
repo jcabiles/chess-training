@@ -1,0 +1,113 @@
+{
+  "traps": [
+    {
+      "id": "ruy-lopez-trap",
+      "name": "Ruy Lopez Trap",
+      "color": "white",
+      "eco": "C60",
+      "parentOpening": "Ruy Lopez",
+      "commonness": 4,
+      "engineNote": "Objectively equal after Ba4, but beginners often misplay the pin.",
+      "startFen": "rnbqkbnr/pppp1ppp/8/4p3/4P3/5N2/PPPP1PPP/RNBQKB1R b KQkq - 1 2",
+      "leadInSan": ["e4", "e5", "Nf3"],
+      "variations": [
+        {
+          "label": "3...Nc6 4.Bb5 a6 5.Ba4 (standard Ruy)",
+          "mainLine": [
+            {
+              "san": "Nc6",
+              "uci": "b8c6",
+              "side": "victim",
+              "bait": true,
+              "note": "Natural development but walks into the pin.",
+              "refutation": {
+                "san": "Nf6",
+                "uci": "g8f6",
+                "note": "Better: develop the kingside knight instead.",
+                "declineSan": ["Bb5", "Nxe4"],
+                "assessment": "Equal game with accurate play."
+              }
+            },
+            {
+              "san": "Bb5",
+              "uci": "f1b5",
+              "side": "trapper",
+              "note": "Pins the knight against the king."
+            },
+            {
+              "san": "a6",
+              "uci": "a7a6",
+              "side": "victim",
+              "forced": true,
+              "note": "Challenging the bishop."
+            },
+            {
+              "san": "Ba4",
+              "uci": "b5a4",
+              "side": "trapper",
+              "note": "Maintaining the pin.",
+              "result": "wins-piece"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "albin-counter-trap",
+      "name": "Albin Counter-Gambit Trap",
+      "color": "black",
+      "eco": "D08",
+      "parentOpening": "Queen's Gambit",
+      "commonness": 2,
+      "startFen": "rnbqkbnr/ppp1pppp/8/3p4/2PP4/8/PP2PPPP/RNBQKBNR b KQkq - 0 2",
+      "leadInSan": ["d4", "d5", "c4"],
+      "variations": [
+        {
+          "label": "3...e5 4.dxe5 d4 Albin trap",
+          "mainLine": [
+            {
+              "san": "e5",
+              "uci": "e7e5",
+              "side": "trapper",
+              "dubious": true,
+              "note": "The Albin Counter-Gambit — objectively dubious but practically dangerous."
+            },
+            {
+              "san": "dxe5",
+              "uci": "d4e5",
+              "side": "victim",
+              "bait": true,
+              "note": "Grabbing the pawn looks natural but leads to trouble.",
+              "refutation": {
+                "san": "e3",
+                "uci": "e2e3",
+                "note": "Declining with e3 keeps a small edge.",
+                "declineSan": ["Nc6", "Nf3"],
+                "assessment": "White is slightly better."
+              }
+            },
+            {
+              "san": "d4",
+              "uci": "d5d4",
+              "side": "trapper",
+              "note": "The Albin pawn pushes forward aggressively."
+            },
+            {
+              "san": "Nf3",
+              "uci": "g1f3",
+              "side": "victim",
+              "forced": true
+            },
+            {
+              "san": "Nc6",
+              "uci": "b8c6",
+              "side": "trapper",
+              "note": "Developing with tempo.",
+              "result": "wins-piece"
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

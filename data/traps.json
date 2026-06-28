@@ -1,0 +1,857 @@
+{
+  "traps": [
+    {
+      "id": "scholars-mate",
+      "name": "Scholar's Mate",
+      "color": "white",
+      "eco": "C20",
+      "parentOpening": "King's Pawn Game",
+      "commonness": 5,
+      "engineNote": "Objectively bad for White if Black defends accurately (the early queen sortie loses time), but below club level the four-move mate scores constantly because beginners develop the f6-knight and forget f7 is only defended by the king.",
+      "startFen": "r1bqkbnr/pppp1ppp/2n5/4p2Q/2B1P3/8/PPPP1PPP/RNB1K1NR b KQkq - 3 3",
+      "leadInSan": ["e4", "e5", "Bc4", "Nc6", "Qh5"],
+      "variations": [
+        {
+          "label": "3...Nf6?? 4.Qxf7#",
+          "mainLine": [
+            {
+              "san": "Nf6",
+              "uci": "g8f6",
+              "side": "victim",
+              "bait": true,
+              "note": "A natural developing move that fatally ignores the threat to f7.",
+              "refutation": {
+                "san": "g6",
+                "uci": "g7g6",
+                "note": "The clean defense: the pawn hits the queen and shields f7. Black is then simply better, since White's queen has wasted moves.",
+                "declineSan": ["Qf3", "Nf6"],
+                "assessment": "Black is comfortable; White's premature queen raid costs tempo (roughly equal to slightly better for Black)."
+              }
+            },
+            {
+              "san": "Qxf7#",
+              "uci": "h5f7",
+              "side": "trapper",
+              "result": "checkmate",
+              "forced": true,
+              "note": "With f7 collapsing, the queen mates instantly. The bishop on c4 guards the escape, so it is mate."
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "legal-mate",
+      "name": "Legal Mate",
+      "color": "white",
+      "eco": "C41",
+      "parentOpening": "Philidor Defense",
+      "commonness": 3,
+      "engineNote": "A genuinely sound queen sacrifice once Black has committed the pinning bishop to g4 and a passive setup; the resulting mating net is forced if Black grabs the queen.",
+      "startFen": "rn1qkbnr/ppp2p1p/3p2p1/4p3/2B1P1b1/2N2N2/PPPP1PPP/R1BQK2R w KQkq - 0 5",
+      "leadInSan": ["e4", "e5", "Nf3", "d6", "Nc3", "Bg4", "Bc4", "g6"],
+      "variations": [
+        {
+          "label": "5.Nxe5! Bxd1?? 6.Bxf7+ Ke7 7.Nd5#",
+          "mainLine": [
+            {
+              "san": "Nxe5",
+              "uci": "f3e5",
+              "side": "trapper",
+              "dubious": false,
+              "note": "The point: the knight 'hangs' the queen on d1, but taking it is fatal because of the bishop on c4 and the knight on c3."
+            },
+            {
+              "san": "Bxd1",
+              "uci": "g4d1",
+              "side": "victim",
+              "bait": true,
+              "note": "Greedily snatching the queen — but the bishop leaves the defense of the kingside.",
+              "refutation": {
+                "san": "dxe5",
+                "uci": "d6e5",
+                "note": "Declining: recapture the knight instead of grabbing the queen. Black keeps the queen-for-knight imbalance favorably and avoids the mate.",
+                "declineSan": ["Qxg4", "Nf6"],
+                "assessment": "After 6.Qxg4 Black is fine and is up a pawn-equivalent; the trap only works if the queen is taken."
+              }
+            },
+            {
+              "san": "Bxf7+",
+              "uci": "c4f7",
+              "side": "trapper",
+              "forced": true,
+              "note": "The first hammer blow: the bishop checks and drags the king out."
+            },
+            {
+              "san": "Ke7",
+              "uci": "e8e7",
+              "side": "victim",
+              "forced": true,
+              "note": "Forced — the king cannot go to f8 or d7 cleanly into the net."
+            },
+            {
+              "san": "Nd5#",
+              "uci": "c3d5",
+              "side": "trapper",
+              "result": "checkmate",
+              "forced": true,
+              "note": "The knight delivers mate; the king is boxed in by its own pieces and the two White minors."
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "tennison-gambit-scandi",
+      "name": "Tennison Gambit Trap",
+      "color": "white",
+      "eco": "B01",
+      "parentOpening": "Scandinavian Defense",
+      "commonness": 3,
+      "engineNote": "The gambit itself is dubious objectively, but once Black accepts the pawn and then casually kicks the g5-knight, the f7 double-sacrifice is a forced queen win that beginners walk into often.",
+      "startFen": "rnbqkb1r/ppp1pppp/5n2/6N1/8/3B4/PPP2PPP/RNBQK2R b KQkq - 0 5",
+      "leadInSan": ["e4", "d5", "Nf3", "dxe4", "Ng5", "Nf6", "d3", "exd3", "Bxd3"],
+      "variations": [
+        {
+          "label": "5...h6?? 6.Nxf7! Kxf7 7.Bg6+!! Kxg6 8.Qxd8",
+          "mainLine": [
+            {
+              "san": "h6",
+              "uci": "h7h6",
+              "side": "victim",
+              "bait": true,
+              "note": "The instinctive 'kick the knight' move — but it loses on the spot to a double sacrifice on f7 and g6.",
+              "refutation": {
+                "san": "e6",
+                "uci": "e7e6",
+                "note": "Solid: blunt the bishop's diagonal and prepare to develop. Now White has nothing concrete for the gambit pawn.",
+                "declineSan": ["Nf3", "Be7"],
+                "assessment": "After a quiet retreat Black is at least equal and holds the extra pawn."
+              }
+            },
+            {
+              "san": "Nxf7",
+              "uci": "g5f7",
+              "side": "trapper",
+              "note": "The first sacrifice rips open the king."
+            },
+            {
+              "san": "Kxf7",
+              "uci": "e8f7",
+              "side": "victim",
+              "forced": true,
+              "note": "Practically forced — declining drops material with the king still exposed."
+            },
+            {
+              "san": "Bg6+",
+              "uci": "d3g6",
+              "side": "trapper",
+              "note": "The second sacrifice: the bishop deflects the king off the e8-d8 line."
+            },
+            {
+              "san": "Kxg6",
+              "uci": "f7g6",
+              "side": "victim",
+              "forced": true,
+              "note": "Forced; the king must take or step into a mating net."
+            },
+            {
+              "san": "Qxd8",
+              "uci": "d1d8",
+              "side": "trapper",
+              "result": "wins-material",
+              "note": "The whole point: with the king dragged to g6, White's queen scoops the undefended black queen on d8 for two minor pieces — a decisive material win."
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "london-qxb2-trap",
+      "name": "London System Poisoned b2",
+      "color": "white",
+      "eco": "D00",
+      "parentOpening": "London System",
+      "commonness": 3,
+      "engineNote": "Sound and practical: after Nc3 the b2-pawn is a real trap. Grabbing it lets Na4 hit the queen, and the queen is rounded up for a knight and a pawn.",
+      "startFen": "rnb1kbnr/pp2pppp/1q6/2pp4/3P1B2/2N1P3/PPP2PPP/R2QKBNR b KQkq - 2 4",
+      "leadInSan": ["d4", "d5", "Bf4", "c5", "e3", "Qb6", "Nc3"],
+      "variations": [
+        {
+          "label": "4...Qxb2?? 5.Na4 Qb4+ 6.c3 Qxa4 7.Qxa4",
+          "mainLine": [
+            {
+              "san": "Qxb2",
+              "uci": "b6b2",
+              "side": "victim",
+              "bait": true,
+              "note": "The poisoned pawn: snatching b2 brings the queen deep into White's camp with no escape route.",
+              "refutation": {
+                "san": "Nc6",
+                "uci": "b8c6",
+                "note": "Develop and leave b2 alone. Black is fine; the b2-pawn was bait, not a free meal.",
+                "declineSan": ["Nf3", "Nf6"],
+                "assessment": "A normal London middlegame, roughly balanced."
+              }
+            },
+            {
+              "san": "Na4",
+              "uci": "c3a4",
+              "side": "trapper",
+              "note": "The knight attacks the queen and cuts off its retreat squares."
+            },
+            {
+              "san": "Qb4+",
+              "uci": "b2b4",
+              "side": "victim",
+              "note": "The only check, hoping to wriggle free — but it runs into c3."
+            },
+            {
+              "san": "c3",
+              "uci": "c2c3",
+              "side": "trapper",
+              "forced": true,
+              "note": "Blocks the check and attacks the queen again; now the queen can only take the knight."
+            },
+            {
+              "san": "Qxa4",
+              "uci": "b4a4",
+              "side": "victim",
+              "forced": true,
+              "note": "Forced — every other queen move drops the queen outright."
+            },
+            {
+              "san": "Qxa4",
+              "uci": "d1a4",
+              "side": "trapper",
+              "result": "wins-material",
+              "note": "White wins the queen for a knight and a pawn — a winning material advantage."
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "blackburne-shilling-gambit",
+      "name": "Blackburne Shilling Gambit",
+      "color": "black",
+      "eco": "C50",
+      "parentOpening": "Italian Game",
+      "commonness": 4,
+      "engineNote": "Objectively dubious (White is better with the calm 4.Nxe5 then careful play, or simply 4.c3), but the greedy 4.Nxe5?? is exactly the move a beginner plays, and then Qg5 wins on the spot.",
+      "startFen": "r1bqkbnr/pppp1ppp/8/4p3/2BnP3/5N2/PPPP1PPP/RNBQK2R w KQkq - 4 4",
+      "leadInSan": ["e4", "e5", "Nf3", "Nc6", "Bc4", "Nd4"],
+      "variations": [
+        {
+          "label": "4.Nxe5?? Qg5! 5.Nxf7 Qxg2 6.Rf1 Qxe4+ 7.Be2 Nf3#",
+          "mainLine": [
+            {
+              "san": "Nxe5",
+              "uci": "f3e5",
+              "side": "victim",
+              "bait": true,
+              "note": "Grabbing the 'free' e5-pawn — the move the whole gambit is designed to provoke.",
+              "refutation": {
+                "san": "c3",
+                "uci": "c2c3",
+                "note": "Don't take the bait: kick the d4-knight first. White keeps a healthy center and Black's knight tour has only lost time.",
+                "declineSan": ["Nxf3+", "Qxf3"],
+                "assessment": "After 4.c3 Nxf3+ 5.Qxf3 White is simply better with a strong center and no tactics to fear."
+              }
+            },
+            {
+              "san": "Qg5",
+              "uci": "d8g5",
+              "side": "trapper",
+              "note": "The double attack: the queen hits both the e5-knight and the g2-pawn. White cannot save both."
+            },
+            {
+              "san": "Nxf7",
+              "uci": "e5f7",
+              "side": "victim",
+              "note": "A greedy fork attempt on the queen and rook — but it ignores Black's attack."
+            },
+            {
+              "san": "Qxg2",
+              "uci": "g5g2",
+              "side": "trapper",
+              "note": "Black takes g2 and threatens the rook on h1 plus mating ideas around f3."
+            },
+            {
+              "san": "Rf1",
+              "uci": "h1f1",
+              "side": "victim",
+              "note": "Saving the rook, but the king is now stuck in the center."
+            },
+            {
+              "san": "Qxe4+",
+              "uci": "g2e4",
+              "side": "trapper",
+              "note": "Grabbing the e4-pawn with check, dragging White's defense apart."
+            },
+            {
+              "san": "Be2",
+              "uci": "c4e2",
+              "side": "victim",
+              "forced": true,
+              "note": "Blocking the check — but it walks into the smothered-style finish."
+            },
+            {
+              "san": "Nf3#",
+              "uci": "d4f3",
+              "side": "trapper",
+              "result": "checkmate",
+              "note": "The d4-knight delivers mate; the king is hemmed in by its own pieces."
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "fishing-pole-trap",
+      "name": "Fishing Pole Trap",
+      "color": "black",
+      "eco": "C65",
+      "parentOpening": "Ruy Lopez Berlin",
+      "commonness": 3,
+      "engineNote": "Offering the g4-knight is objectively a small concession, but if White actually grabs it the open h-file plus the en-passant break on f3 give Black a near-forced mating attack that scores heavily below master level.",
+      "startFen": "r1bqkb1r/pppp1pp1/2n5/1B2p2p/4P1n1/5N1P/PPPP1PP1/RNBQ1RK1 w kq - 0 6",
+      "leadInSan": ["e4", "e5", "Nf3", "Nc6", "Bb5", "Nf6", "O-O", "Ng4", "h3", "h5"],
+      "variations": [
+        {
+          "label": "6.hxg4?? hxg4 7.Nxe5 Qh4 8.f4 gxf3 e.p. 9.Nxf7 f2+ 10.Rxf2 Qh1#",
+          "mainLine": [
+            {
+              "san": "hxg4",
+              "uci": "h3g4",
+              "side": "victim",
+              "bait": true,
+              "note": "Taking the knight is the fatal greed: it rips open the h-file straight at White's castled king.",
+              "refutation": {
+                "san": "Ne1",
+                "uci": "f3e1",
+                "note": "Don't take the bait — retreat the knight and leave the g4-knight alone. White stays safe and keeps a normal Ruy Lopez.",
+                "declineSan": ["Nf6", "Nf3"],
+                "assessment": "After the calm retreat Black has nothing; White is comfortable."
+              }
+            },
+            {
+              "san": "hxg4",
+              "uci": "h5g4",
+              "side": "trapper",
+              "forced": true,
+              "note": "Recapturing opens the h-file with the rook already bearing down on h1."
+            },
+            {
+              "san": "Nxe5",
+              "uci": "f3e5",
+              "side": "victim",
+              "note": "Snatching another pawn and ignoring the storm — typical of the player who took the first bait."
+            },
+            {
+              "san": "Qh4",
+              "uci": "d8h4",
+              "side": "trapper",
+              "note": "The queen swings to h4 with the deadly threat of Qh1#/Qh2# down the open file."
+            },
+            {
+              "san": "f4",
+              "uci": "f2f4",
+              "side": "victim",
+              "note": "Trying to give the king the f2-square — but it allows a crushing en-passant capture."
+            },
+            {
+              "san": "gxf3",
+              "uci": "g4f3",
+              "side": "trapper",
+              "note": "Capturing en passant: the g4-pawn takes the f4-pawn's passing square on f3, prying open the king."
+            },
+            {
+              "san": "Nxf7",
+              "uci": "e5f7",
+              "side": "victim",
+              "note": "A last desperate grab; nothing saves White now."
+            },
+            {
+              "san": "f2+",
+              "uci": "f3f2",
+              "side": "trapper",
+              "note": "Pushing the pawn with check, dragging the rook to a fatal square."
+            },
+            {
+              "san": "Rxf2",
+              "uci": "f1f2",
+              "side": "victim",
+              "forced": true,
+              "note": "Forced, but it vacates the first rank."
+            },
+            {
+              "san": "Qh1#",
+              "uci": "h4h1",
+              "side": "trapper",
+              "result": "checkmate",
+              "note": "The queen mates on h1; the king has no escape down the file it opened itself."
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "stafford-gambit",
+      "name": "Stafford Gambit",
+      "color": "black",
+      "eco": "C42",
+      "parentOpening": "Petrov Defense",
+      "commonness": 3,
+      "engineNote": "Objectively a touch worse for Black with best play (White holds with 4.Nc4! or careful development), but the practical traps are vicious: the greedy 4.Nxc6 leads to a king hunt or a queen win, and beginners stumble into both.",
+      "startFen": "r1bqkb1r/pppp1ppp/2n2n2/4N3/4P3/8/PPPP1PPP/RNBQKB1R w KQkq - 1 4",
+      "leadInSan": ["e4", "e5", "Nf3", "Nf6", "Nxe5", "Nc6"],
+      "variations": [
+        {
+          "label": "4.Nxc6?? dxc6 5.d3 Bc5 6.Bg5 Nxe4! 7.Bxd8 Bxf2+ 8.Ke2 Bg4#",
+          "mainLine": [
+            {
+              "san": "Nxc6",
+              "uci": "e5c6",
+              "side": "victim",
+              "bait": true,
+              "note": "Returning the knight to grab another piece looks natural but hands Black a huge development lead and open lines.",
+              "refutation": {
+                "san": "Nc4",
+                "uci": "e5c4",
+                "note": "The engine refutation: retreat the knight to c4, keeping the extra pawn while sidestepping every trap.",
+                "declineSan": ["Nxe4", "Nc3"],
+                "assessment": "After 4.Nc4 White is objectively a little better and avoids all the tricks."
+              }
+            },
+            {
+              "san": "dxc6",
+              "uci": "d7c6",
+              "side": "trapper",
+              "note": "Recapturing opens the d-file and the c8-bishop's diagonal for a fast attack."
+            },
+            {
+              "san": "d3",
+              "uci": "d2d3",
+              "side": "victim",
+              "note": "A natural-looking developing move that does nothing about Black's initiative."
+            },
+            {
+              "san": "Bc5",
+              "uci": "f8c5",
+              "side": "trapper",
+              "note": "Aiming the bishop at f2 — the soft spot in White's uncastled position."
+            },
+            {
+              "san": "Bg5",
+              "uci": "c1g5",
+              "side": "victim",
+              "note": "Pinning the f6-knight, but the pin is an illusion: the knight jumps with devastating effect."
+            },
+            {
+              "san": "Nxe4!",
+              "uci": "f6e4",
+              "side": "trapper",
+              "note": "Breaking the 'pin' — if White grabs the queen, Black mates first."
+            },
+            {
+              "san": "Bxd8",
+              "uci": "g5d8",
+              "side": "victim",
+              "note": "Taking the queen, walking straight into mate."
+            },
+            {
+              "san": "Bxf2+",
+              "uci": "c5f2",
+              "side": "trapper",
+              "note": "The bishop checks and pulls the king into the open."
+            },
+            {
+              "san": "Ke2",
+              "uci": "e1e2",
+              "side": "victim",
+              "forced": true,
+              "note": "Forced; the king has nowhere safe."
+            },
+            {
+              "san": "Bg4#",
+              "uci": "c8g4",
+              "side": "trapper",
+              "result": "checkmate",
+              "note": "The light-squared bishop completes the mating net — the king is trapped by Black's minor pieces."
+            }
+          ]
+        },
+        {
+          "label": "4.Nxc6?? dxc6 5.d3 Bc5 6.h3?? Nxe4! 7.dxe4 Bxf2+ 8.Kxf2 Qxd1",
+          "mainLine": [
+            {
+              "san": "Nxc6",
+              "uci": "e5c6",
+              "side": "victim",
+              "bait": true,
+              "note": "Again the greedy capture — but here White's later h3 lets Black win the queen instead of mating.",
+              "refutation": {
+                "san": "Nc4",
+                "uci": "e5c4",
+                "note": "Retreat with 4.Nc4! and the whole gambit fizzles; White keeps the pawn and stays safe.",
+                "declineSan": ["Nxe4", "Nc3"],
+                "assessment": "White is slightly better after 4.Nc4 with no tactics to fear."
+              }
+            },
+            {
+              "san": "dxc6",
+              "uci": "d7c6",
+              "side": "trapper",
+              "note": "Opening lines for the rapid attack."
+            },
+            {
+              "san": "d3",
+              "uci": "d2d3",
+              "side": "victim",
+              "note": "Passive; Black's pieces flow out faster."
+            },
+            {
+              "san": "Bc5",
+              "uci": "f8c5",
+              "side": "trapper",
+              "note": "Targeting f2 once more."
+            },
+            {
+              "san": "h3",
+              "uci": "h2h3",
+              "side": "victim",
+              "note": "A wasted waiting move that fails to address the e4/f2 tactics."
+            },
+            {
+              "san": "Nxe4!",
+              "uci": "f6e4",
+              "side": "trapper",
+              "note": "The knight sacrifice opens the d-file toward White's queen."
+            },
+            {
+              "san": "dxe4",
+              "uci": "d3e4",
+              "side": "victim",
+              "note": "Recapturing — but now the f2-bishop fork wins the queen."
+            },
+            {
+              "san": "Bxf2+",
+              "uci": "c5f2",
+              "side": "trapper",
+              "note": "A zwischenzug check before collecting the queen."
+            },
+            {
+              "san": "Kxf2",
+              "uci": "e1f2",
+              "side": "victim",
+              "forced": true,
+              "note": "Forced recapture; the king steps off the back rank."
+            },
+            {
+              "san": "Qxd1",
+              "uci": "d8d1",
+              "side": "trapper",
+              "result": "wins-material",
+              "note": "Black scoops the queen on d1 for a bishop — a decisive material advantage."
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "elephant-trap",
+      "name": "Elephant Trap",
+      "color": "black",
+      "eco": "D51",
+      "parentOpening": "Queen's Gambit Declined",
+      "commonness": 3,
+      "engineNote": "A classic equalizer: the d5-knight grab looks like it wins a pawn against the pinned f6-knight, but the in-between checks win a clean piece for Black.",
+      "startFen": "r1bqkb1r/pppn1ppp/5n2/3p2B1/3P4/2N5/PP2PPPP/R2QKBNR w KQkq - 0 6",
+      "leadInSan": ["d4", "d5", "c4", "e6", "Nc3", "Nf6", "Bg5", "Nbd7", "cxd5", "exd5"],
+      "variations": [
+        {
+          "label": "6.Nxd5?? Nxd5! 7.Bxd8 Bb4+ 8.Qd2 Bxd2+ 9.Kxd2 Kxd8",
+          "mainLine": [
+            {
+              "san": "Nxd5",
+              "uci": "c3d5",
+              "side": "victim",
+              "bait": true,
+              "note": "Grabbing the d5-pawn 'because the f6-knight is pinned' — the entire point of the trap.",
+              "refutation": {
+                "san": "Bxf6",
+                "uci": "g5f6",
+                "note": "First resolve the pin: capture on f6, and only then take on d5. That way White safely keeps an even game.",
+                "declineSan": ["Nxf6", "e3"],
+                "assessment": "After 6.Bxf6 Nxf6 7.e3 it is a normal, balanced Queen's Gambit Declined."
+              }
+            },
+            {
+              "san": "Nxd5",
+              "uci": "f6d5",
+              "side": "trapper",
+              "note": "The knight wasn't really pinned — taking back exposes the bishop on g5 and the queen behind it."
+            },
+            {
+              "san": "Bxd8",
+              "uci": "g5d8",
+              "side": "victim",
+              "note": "Winning the queen, but Black's in-between check turns the tables."
+            },
+            {
+              "san": "Bb4+",
+              "uci": "f8b4",
+              "side": "trapper",
+              "note": "The key zwischenzug: check first, before recapturing the bishop on d8."
+            },
+            {
+              "san": "Qd2",
+              "uci": "d1d2",
+              "side": "victim",
+              "forced": true,
+              "note": "Blocking the check with the queen — the only way to meet it."
+            },
+            {
+              "san": "Bxd2+",
+              "uci": "b4d2",
+              "side": "trapper",
+              "note": "Trading off, still with check, keeping the initiative."
+            },
+            {
+              "san": "Kxd2",
+              "uci": "e1d2",
+              "side": "victim",
+              "forced": true,
+              "note": "Forced recapture."
+            },
+            {
+              "san": "Kxd8",
+              "uci": "e8d8",
+              "side": "trapper",
+              "result": "wins-material",
+              "note": "Black finally collects the bishop on d8 and emerges a clean minor piece up for a pawn."
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "englund-gambit-trap",
+      "name": "Englund Gambit Mate",
+      "color": "black",
+      "eco": "A40",
+      "parentOpening": "Englund Gambit",
+      "commonness": 2,
+      "engineNote": "The gambit is objectively poor, but the queen raid to b2 sets a beautiful mating trap; if White defends the rook with the natural Qd2 instead of Bxb4, it is mate in two.",
+      "startFen": "r1b1k1nr/pppp1ppp/2n5/4P3/1b6/2B2N2/PqP1PPPP/RN1QKB1R w KQkq - 2 7",
+      "leadInSan": ["d4", "e5", "dxe5", "Nc6", "Nf3", "Qe7", "Bf4", "Qb4+", "Bd2", "Qxb2", "Bc3", "Bb4"],
+      "variations": [
+        {
+          "label": "7.Qd2?? Bxc3 8.Qxc3 Qc1#",
+          "mainLine": [
+            {
+              "san": "Qd2",
+              "uci": "d1d2",
+              "side": "victim",
+              "bait": true,
+              "note": "Defending the c3-bishop and the a1-rook in one move looks sensible — but it allows a forced mate.",
+              "refutation": {
+                "san": "Bxb4",
+                "uci": "c3b4",
+                "note": "The only good move: capture the b4-bishop instead. White survives, down just a pawn rather than mated.",
+                "declineSan": ["Nxb4", "Na3"],
+                "assessment": "After 7.Bxb4 Nxb4 White has weathered the storm and is only slightly worse."
+              }
+            },
+            {
+              "san": "Bxc3",
+              "uci": "b4c3",
+              "side": "trapper",
+              "note": "Removing the defender of the d2-queen and clearing the way to c1."
+            },
+            {
+              "san": "Qxc3",
+              "uci": "d2c3",
+              "side": "victim",
+              "forced": true,
+              "note": "Forced recapture — but the back rank is now fatally weak."
+            },
+            {
+              "san": "Qc1#",
+              "uci": "b2c1",
+              "side": "trapper",
+              "result": "checkmate",
+              "note": "The queen drops to c1 with mate; the king is boxed in on its own first rank."
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "lasker-trap",
+      "name": "Lasker Trap",
+      "color": "black",
+      "eco": "D08",
+      "parentOpening": "Albin Countergambit",
+      "commonness": 2,
+      "engineNote": "Famous for an early underpromotion: if White grabs the b4-bishop, the pawn promotes to a knight with check, and Black wins the queen. The Albin is rare at beginner level, but the trick is unforgettable.",
+      "startFen": "rnbqk1nr/ppp2ppp/8/4P3/1bP5/4p3/PP1B1PPP/RN1QKBNR w KQkq - 0 6",
+      "leadInSan": ["d4", "d5", "c4", "e5", "dxe5", "d4", "e3", "Bb4+", "Bd2", "dxe3"],
+      "variations": [
+        {
+          "label": "6.Bxb4?? exf2+ 7.Ke2 fxg1=N+! 8.Rxg1 Bg4+ 9.Ke1 Bxd1",
+          "mainLine": [
+            {
+              "san": "Bxb4",
+              "uci": "d2b4",
+              "side": "victim",
+              "bait": true,
+              "note": "Snatching the b4-bishop overlooks that the e3-pawn is about to wreck White's king.",
+              "refutation": {
+                "san": "fxe3",
+                "uci": "f2e3",
+                "note": "Recapture the e3-pawn first, keeping the king safe. White avoids the whole combination.",
+                "declineSan": ["Bxd2+", "Nxd2"],
+                "assessment": "After 6.fxe3 Bxd2+ 7.Nxd2 the position is roughly balanced; the trap never fires."
+              }
+            },
+            {
+              "san": "exf2+",
+              "uci": "e3f2",
+              "side": "trapper",
+              "note": "The pawn crashes through with check, exposing White's king."
+            },
+            {
+              "san": "Ke2",
+              "uci": "e1e2",
+              "side": "victim",
+              "note": "Stepping out — but now the underpromotion is decisive."
+            },
+            {
+              "san": "fxg1=N+!",
+              "uci": "f2g1n",
+              "side": "trapper",
+              "note": "The signature underpromotion: promoting to a knight gives check, where a new queen would not. This wins time to grab White's queen."
+            },
+            {
+              "san": "Rxg1",
+              "uci": "h1g1",
+              "side": "victim",
+              "forced": true,
+              "note": "Taking the knight, but it abandons the d1-queen's defense along the back rank."
+            },
+            {
+              "san": "Bg4+",
+              "uci": "c8g4",
+              "side": "trapper",
+              "note": "Check from the c8-bishop, skewering the king and the queen."
+            },
+            {
+              "san": "Ke1",
+              "uci": "e2e1",
+              "side": "victim",
+              "forced": true,
+              "note": "Forced; every king move leaves the queen hanging."
+            },
+            {
+              "san": "Bxd1",
+              "uci": "g4d1",
+              "side": "trapper",
+              "result": "wins-queen",
+              "note": "Black collects the queen — a winning material edge after the famous underpromotion."
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "noahs-ark-trap",
+      "name": "Noah's Ark Trap",
+      "color": "black",
+      "eco": "C70",
+      "parentOpening": "Ruy Lopez",
+      "commonness": 2,
+      "engineNote": "A timeless trap: if White grabs the e5-pawn with the queen and then chases with Qd5, Black's pawns roll forward and snare the b3-bishop with a3-b5-c4 cage.",
+      "startFen": "r1bqkbnr/2p2ppp/p2p4/1p6/3pP3/1B6/PPP2PPP/RNBQK2R w KQkq - 0 8",
+      "leadInSan": ["e4", "e5", "Nf3", "Nc6", "Bb5", "a6", "Ba4", "d6", "d4", "b5", "Bb3", "Nxd4", "Nxd4", "exd4"],
+      "variations": [
+        {
+          "label": "8.Qxd4?? c5 9.Qd5 Be6 10.Qc6+ Bd7 11.Qd5 c4 (the bishop is trapped)",
+          "mainLine": [
+            {
+              "san": "Qxd4",
+              "uci": "d1d4",
+              "side": "victim",
+              "bait": true,
+              "note": "Recapturing the pawn with the queen looks fine, but the queen will be chased into a fatal square while the b3-bishop gets caged.",
+              "refutation": {
+                "san": "Bd5",
+                "uci": "b3d5",
+                "note": "Keep the bishop active and safe with Bd5; do not commit the queen to the chase. White stays solid.",
+                "declineSan": ["c6", "Bb3"],
+                "assessment": "After 8.Bd5 c6 9.Bb3 the bishop slips back to safety and the trap is avoided."
+              }
+            },
+            {
+              "san": "c5",
+              "uci": "c7c5",
+              "side": "trapper",
+              "note": "Gaining a tempo on the queen and starting the pawn net around the b3-bishop."
+            },
+            {
+              "san": "Qd5",
+              "uci": "d4d5",
+              "side": "victim",
+              "note": "Centralizing the queen — but it walks into a string of tempo-gaining hits."
+            },
+            {
+              "san": "Be6",
+              "uci": "c8e6",
+              "side": "trapper",
+              "note": "Attacking the queen again and preparing to fence in the bishop."
+            },
+            {
+              "san": "Qc6+",
+              "uci": "d5c6",
+              "side": "victim",
+              "note": "A check, but it only helps Black complete the development of the trap."
+            },
+            {
+              "san": "Bd7",
+              "uci": "e6d7",
+              "side": "trapper",
+              "note": "Blocking the check with tempo, kicking the queen back."
+            },
+            {
+              "san": "Qd5",
+              "uci": "c6d5",
+              "side": "victim",
+              "note": "Retreating — but now the decisive pawn push lands."
+            },
+            {
+              "san": "c4",
+              "uci": "c5c4",
+              "side": "trapper",
+              "note": "Slamming the cage shut: the b3-bishop has only a4 or c4, and both are captured by a pawn."
+            },
+            {
+              "san": "Ba4",
+              "uci": "b3a4",
+              "side": "victim",
+              "forced": true,
+              "note": "The only try to save the bishop — but it lands on a square a pawn covers."
+            },
+            {
+              "san": "bxa4",
+              "uci": "b5a4",
+              "side": "trapper",
+              "result": "wins-material",
+              "note": "Black captures the trapped bishop and emerges with a winning material advantage."
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

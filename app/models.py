@@ -109,6 +109,15 @@ class CommentaryRequest(BaseModel):
     fen: str = Field(description="Position (after a move) to fetch commentary for, in FEN.")
 
 
+class TrapsCheckRequest(BaseModel):
+    """Body for ``POST /api/traps/check`` — the current line (server derives EPD)."""
+
+    baseFen: str = Field(description="Starting FEN of the line (usually the standard start).")
+    moves: list[str] = Field(
+        default_factory=list, description="UCI moves applied from baseFen, in order."
+    )
+
+
 # --- Response models --------------------------------------------------------
 
 

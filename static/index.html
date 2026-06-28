@@ -104,6 +104,29 @@
         </div>
         <div id="study-commentary" class="study-commentary">—</div>
       </div>
+      <!-- Trap drill bar — shown only in trap-watch / trap-practice modes (TT5 fills the body) -->
+      <div id="trap-bar" class="trap-bar" hidden>
+        <div class="trap-header">
+          <span id="trap-title" class="trap-title">Trap</span>
+          <button id="trap-return">Return to my game</button>
+        </div>
+        <div class="trap-controls">
+          <button id="trap-mode-toggle">Watch ⇄ Practice</button>
+        </div>
+        <div id="trap-stepper" class="trap-stepper">
+          <button id="trap-first" title="First">&#9198;</button>
+          <button id="trap-prev">&#9664; Prev</button>
+          <button id="trap-next">Next &#9654;</button>
+          <button id="trap-last" title="Last">&#9197;</button>
+        </div>
+        <div id="trap-move" class="trap-move"></div>
+        <div id="trap-note" class="trap-note"></div>
+        <div id="trap-feedback" class="trap-feedback" hidden></div>
+        <div id="trap-reveal" class="trap-reveal" hidden>
+          <button id="trap-reveal-move" title="Play the next correct move for me">Reveal move</button>
+          <button id="trap-show-refutation" title="Show what the opponent should have played">Show refutation</button>
+        </div>
+      </div>
     </section>
 
     <aside class="panel">
@@ -131,6 +154,26 @@
         <input id="opening-filter" type="text" placeholder="Filter openings…" />
         <div id="opening-candidates" class="opening-candidates"></div>
         <div id="opening-truncated" class="opening-truncated" hidden></div>
+      </div>
+
+      <div id="traps-section" class="traps-section">
+        <div class="eval-label">Opening Traps</div>
+        <div class="traps-filters">
+          <input id="traps-name-filter" type="text" placeholder="Filter by name…" />
+          <select id="traps-color-filter">
+            <option value="">All colors</option>
+            <option value="white">White</option>
+            <option value="black">Black</option>
+          </select>
+        </div>
+        <div id="traps-list" class="traps-list"></div>
+      </div>
+
+      <!-- Live trap-available nudge chip (play mode only) -->
+      <div id="trap-chip" class="trap-chip" hidden>
+        <span id="trap-chip-text" class="trap-chip-text"></span>
+        <button id="trap-chip-drill" class="trap-chip-drill">Drill it</button>
+        <button id="trap-chip-dismiss" class="trap-chip-dismiss" title="Dismiss">&#10005;</button>
       </div>
 
       <div id="status" class="status"></div>

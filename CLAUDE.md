@@ -7,9 +7,11 @@ Guidance for Claude Code when working in this repository.
 A local, single-user **Stockfish chess analysis web app**: FastAPI + python-chess
 backend driving Stockfish, chessground/chessops frontend. Play both colors, load
 FENs, undo/redo/flip, live eval + move-quality labels, localStorage session
-persistence, a setup/pregame position editor, and an **opening trainer** (live
+persistence, a setup/pregame position editor, an **opening trainer** (live
 opening detection + candidate openings + a study walkthrough with commentary,
-backed by the bundled lichess openings TSVs + `data/commentary.json`).
+backed by the bundled lichess openings TSVs + `data/commentary.json`), and an
+**opening traps trainer** (browsable trap catalog with watch and practice modes,
+backed by `data/traps.json`).
 
 ## Commands
 
