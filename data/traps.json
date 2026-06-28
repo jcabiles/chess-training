@@ -1,6 +1,185 @@
 {
   "traps": [
     {
+      "id": "fried-liver-attack",
+      "name": "Fried Liver Attack",
+      "color": "white",
+      "eco": "C57",
+      "parentOpening": "Italian Game, Two Knights Defense",
+      "commonness": 4,
+      "engineNote": "Objectively only about equal with precise defense (6...Kxf7 7.Qf3+ Ke6 8.Nc3 Nb4!), but a brutal practical attack below master level: the king is dragged to e6 and must defend with inhuman accuracy.",
+      "startFen": "r1bqkb1r/ppp2ppp/2n2n2/3Pp1N1/2B5/8/PPPP1PPP/RNBQK2R b KQkq - 0 5",
+      "leadInSan": ["e4", "e5", "Nf3", "Nc6", "Bc4", "Nf6", "Ng5", "d5", "exd5"],
+      "variations": [
+        {
+          "label": "5...Nxd5?! 6.Nxf7! Kxf7 7.Qf3+ Ke6 8.Nc3",
+          "mainLine": [
+            {
+              "san": "Nxd5",
+              "uci": "f6d5",
+              "side": "victim",
+              "bait": true,
+              "note": "The natural recapture — but the d5-knight is loose and f7 is fragile, which is exactly what White is counting on.",
+              "refutation": {
+                "san": "Na5",
+                "uci": "c6a5",
+                "note": "The Polerio Defense: instead of recapturing, Black hits the c4-bishop and gives the pawn back later, so White never gets the f7 sacrifice.",
+                "declineSan": ["Bb5+", "c6", "dxc6", "bxc6"],
+                "assessment": "Roughly equal; Black has active pieces and easy development for the pawn."
+              }
+            },
+            {
+              "san": "Nxf7",
+              "uci": "g5f7",
+              "side": "trapper",
+              "note": "The Fried Liver sacrifice: the knight smashes f7 to haul the king into the open."
+            },
+            {
+              "san": "Kxf7",
+              "uci": "e8f7",
+              "side": "victim",
+              "forced": true,
+              "note": "Forced — declining just leaves White a clean pawn up with an ongoing initiative."
+            },
+            {
+              "san": "Qf3+",
+              "uci": "d1f3",
+              "side": "trapper",
+              "note": "Check, and the queen trains its sights on the loose knight on d5."
+            },
+            {
+              "san": "Ke6",
+              "uci": "f7e6",
+              "side": "victim",
+              "forced": true,
+              "note": "The only move that defends the d5-knight; the king walks to e6, straight into the attack."
+            },
+            {
+              "san": "Nc3",
+              "uci": "b1c3",
+              "side": "trapper",
+              "result": "winning-attack",
+              "note": "Bringing the last piece in with tempo against d5. Black is theoretically holding, but with the king stranded on e6 this is winning in practice at club level."
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "petrov-queen-trap",
+      "name": "Petrov Trap",
+      "color": "white",
+      "eco": "C42",
+      "parentOpening": "Petrov (Russian) Defense",
+      "commonness": 3,
+      "engineNote": "Sound and forcing: after the careless 3...Nxe4 4.Qe2, the natural-looking 4...Nf6?? walks into a discovered check that wins the queen. Black must instead play 4...Qe7.",
+      "startFen": "rnbqkb1r/pppp1ppp/8/4N3/4n3/8/PPPPQPPP/RNB1KB1R b KQkq - 1 4",
+      "leadInSan": ["e4", "e5", "Nf3", "Nf6", "Nxe5", "Nxe4", "Qe2"],
+      "variations": [
+        {
+          "label": "4...Nf6?? 5.Nc6+ wins the queen",
+          "mainLine": [
+            {
+              "san": "Nf6",
+              "uci": "e4f6",
+              "side": "victim",
+              "bait": true,
+              "note": "Retreating the knight unpins it from the e-file — but it uncovers a discovered check Black has overlooked.",
+              "refutation": {
+                "san": "Qe7",
+                "uci": "d8e7",
+                "note": "The antidote: meet the pin with a counter-pin. After 5.Qxe4 d6 Black rounds up the e5-knight and equalizes.",
+                "declineSan": ["Qxe4", "d6", "d4", "dxe5"],
+                "assessment": "Equal; Black regains the piece with a sound position."
+              }
+            },
+            {
+              "san": "Nc6+",
+              "uci": "e5c6",
+              "side": "trapper",
+              "note": "Discovered check from the e2-queen — and the knight forks the queen on d8 at the same time."
+            },
+            {
+              "san": "Be7",
+              "uci": "f8e7",
+              "side": "victim",
+              "note": "Blocking the check is forced (the king has no squares), but it cannot save the queen."
+            },
+            {
+              "san": "Nxd8",
+              "uci": "c6d8",
+              "side": "trapper",
+              "result": "wins-queen",
+              "note": "The fork collects the queen for the knight — White emerges a queen for a minor piece ahead."
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "damiano-defense-trap",
+      "name": "Damiano Defense Trap",
+      "color": "white",
+      "eco": "C40",
+      "parentOpening": "Damiano Defense",
+      "commonness": 3,
+      "engineNote": "2...f6?? is one of the most common beginner blunders; the knight sacrifice on e5 is completely sound and wins by force if Black recaptures.",
+      "startFen": "rnbqkbnr/pppp2pp/5p2/4N3/4P3/8/PPPP1PPP/RNBQKB1R b KQkq - 0 3",
+      "leadInSan": ["e4", "e5", "Nf3", "f6", "Nxe5"],
+      "variations": [
+        {
+          "label": "3...fxe5?? 4.Qh5+ g6 5.Qxe5+ wins the rook",
+          "mainLine": [
+            {
+              "san": "fxe5",
+              "uci": "f6e5",
+              "side": "victim",
+              "bait": true,
+              "note": "Grabbing the knight looks free, but it opens the e-file and the h5-e8 diagonal onto the exposed king.",
+              "refutation": {
+                "san": "Qe7",
+                "uci": "d8e7",
+                "note": "The only sane reply: don't take the knight. After 4.Nf3 Black is merely down a pawn instead of getting mated or losing the rook.",
+                "declineSan": ["Nf3", "d6"],
+                "assessment": "Black is down a pawn but structurally intact — far better than the alternative."
+              }
+            },
+            {
+              "san": "Qh5+",
+              "uci": "d1h5",
+              "side": "trapper",
+              "note": "The point of the sacrifice: an immediate check the king cannot comfortably meet."
+            },
+            {
+              "san": "g6",
+              "uci": "g7g6",
+              "side": "victim",
+              "note": "Blocking with the g-pawn — but now the e5-pawn falls with check and the long diagonal to h8 opens."
+            },
+            {
+              "san": "Qxe5+",
+              "uci": "h5e5",
+              "side": "trapper",
+              "note": "Regaining the material with check and, crucially, hitting the rook on h8 along the diagonal."
+            },
+            {
+              "san": "Qe7",
+              "uci": "d8e7",
+              "side": "victim",
+              "note": "Interposing is essentially forced; the king has no safe square."
+            },
+            {
+              "san": "Qxh8",
+              "uci": "e5h8",
+              "side": "trapper",
+              "result": "wins-material",
+              "note": "Collecting the rook: White is up a rook for the sacrificed knight, with a still-exposed Black king."
+            }
+          ]
+        }
+      ]
+    },
+    {
       "id": "scholars-mate",
       "name": "Scholar's Mate",
       "color": "white",

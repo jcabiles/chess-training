@@ -26,7 +26,13 @@ DATA_PATH = os.path.join(
 # Allowed enum values.
 _COLORS = {"white", "black"}
 _SIDES = {"trapper", "victim"}
-_RESULTS = {"checkmate", "wins-piece", "wins-queen", "wins-material"}
+# "winning-attack" = a sacrifice for a decisive attack where the payoff is NOT a
+# forced mate or a fixed material tally at the final ply (e.g. the Fried Liver).
+# It can't be proven "winning" without an engine, so its correctness gate is:
+# legal replay (like every line) PLUS a mechanical king-exposure signature
+# (see test_winning_attack_results) — the trapper line must leave the victim's
+# king in check or stripped of castling rights.
+_RESULTS = {"checkmate", "wins-piece", "wins-queen", "wins-material", "winning-attack"}
 
 # Simple piece-value table for the material-delta checks (kings excluded).
 _PIECE_VALUES = {
@@ -328,6 +334,32 @@ def test_material_win_results_reach_delta(traps):
                     f"{ctx}: ply {i} ({ply['san']!r}) claims {result} but trapper "
                     f"material gain is only {gained} (need >= {need}); "
                     f"fen {board.fen()}"
+                )
+
+
+# ---------------------------------------------------------------------------
+# 6b. result == 'winning-attack' leaves the victim's king exposed after the ply
+#     (in check, or having lost all castling rights). Positional sacs can't be
+#     proven "winning" mechanically, so this is the rigor we CAN assert.
+# ---------------------------------------------------------------------------
+
+
+def test_winning_attack_results_expose_king(traps):
+    for trap, var in _all_variations(traps):
+        ctx = f"{trap['id']}::{var['label']}"
+        victim = not _trapper_color(trap)
+        board = _start_board(trap)
+        for i, ply in enumerate(var["mainLine"]):
+            board.push(chess.Move.from_uci(ply["uci"]))
+            if ply.get("result") == "winning-attack":
+                exposed = board.is_check() or not (
+                    board.has_kingside_castling_rights(victim)
+                    or board.has_queenside_castling_rights(victim)
+                )
+                assert exposed, (
+                    f"{ctx}: ply {i} ({ply['san']!r}) claims winning-attack but the "
+                    f"victim king is neither in check nor stripped of castling "
+                    f"(fen {board.fen()})"
                 )
 
 
