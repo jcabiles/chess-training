@@ -409,3 +409,152 @@ class TestLeakRecord:
         assert lk.hung_square is None
         assert lk.lead_in_ply is None
         assert lk.explanation_json is None
+
+
+# ---------------------------------------------------------------------------
+# set_my_color
+# ---------------------------------------------------------------------------
+
+class TestSetMyColor:
+    def test_set_color_white(self, tmp_path):
+        _init(tmp_path)
+        gid = storage.insert_game(_game())
+        result = storage.set_my_color(gid, "white")
+        assert result is True
+        row = storage.get_game(gid)
+        assert row["my_color"] == "white"
+
+    def test_set_color_black(self, tmp_path):
+        _init(tmp_path)
+        gid = storage.insert_game(_game())
+        result = storage.set_my_color(gid, "black")
+        assert result is True
+        row = storage.get_game(gid)
+        assert row["my_color"] == "black"
+
+    def test_set_color_none_clears(self, tmp_path):
+        _init(tmp_path)
+        gid = storage.insert_game(_game(my_color="white"))
+        result = storage.set_my_color(gid, None)
+        assert result is True
+        row = storage.get_game(gid)
+        assert row["my_color"] is None
+
+    def test_set_color_resets_status_to_pending(self, tmp_path):
+        """Changing my_color always resets analysis_status to 'pending'."""
+        _init(tmp_path)
+        gid = storage.insert_game(_game())
+        storage.set_status(gid, "done")
+        assert storage.get_game(gid)["analysis_status"] == "done"
+
+        storage.set_my_color(gid, "black")
+        assert storage.get_game(gid)["analysis_status"] == "pending"
+
+    def test_set_color_invalid_raises(self, tmp_path):
+        _init(tmp_path)
+        gid = storage.insert_game(_game())
+        with pytest.raises(ValueError):
+            storage.set_my_color(gid, "purple")
+
+    def test_set_color_nonexistent_game_returns_false(self, tmp_path):
+        _init(tmp_path)
+        result = storage.set_my_color(999, "white")
+        assert result is False
+
+
+# ---------------------------------------------------------------------------
+# retag_colors_by_aliases
+# ---------------------------------------------------------------------------
+
+class TestRetagColorsByAliases:
+    def test_tags_white_player(self, tmp_path):
+        _init(tmp_path)
+        gid = storage.insert_game(_game(white="Magnus", black="Hikaru", content_hash="h1"))
+        count = storage.retag_colors_by_aliases(["Magnus"])
+        assert count == 1
+        assert storage.get_game(gid)["my_color"] == "white"
+
+    def test_tags_black_player(self, tmp_path):
+        _init(tmp_path)
+        gid = storage.insert_game(_game(white="Magnus", black="Hikaru", content_hash="h1"))
+        count = storage.retag_colors_by_aliases(["Hikaru"])
+        assert count == 1
+        assert storage.get_game(gid)["my_color"] == "black"
+
+    def test_case_insensitive_match(self, tmp_path):
+        _init(tmp_path)
+        gid = storage.insert_game(_game(white="Magnus", black="Hikaru", content_hash="h1"))
+        count = storage.retag_colors_by_aliases(["MAGNUS"])
+        assert count == 1
+        assert storage.get_game(gid)["my_color"] == "white"
+
+    def test_nonmatch_leaves_null(self, tmp_path):
+        _init(tmp_path)
+        gid = storage.insert_game(_game(white="Magnus", black="Hikaru", content_hash="h1"))
+        count = storage.retag_colors_by_aliases(["AliceUnknown"])
+        assert count == 0
+        assert storage.get_game(gid)["my_color"] is None
+
+    def test_resets_status_to_pending(self, tmp_path):
+        _init(tmp_path)
+        gid = storage.insert_game(_game(white="Magnus", black="Hikaru", content_hash="h1"))
+        storage.set_status(gid, "done")
+        storage.retag_colors_by_aliases(["Magnus"])
+        assert storage.get_game(gid)["analysis_status"] == "pending"
+
+    def test_multiple_aliases(self, tmp_path):
+        _init(tmp_path)
+        gid1 = storage.insert_game(_game(white="alice", black="bob", content_hash="h1"))
+        gid2 = storage.insert_game(_game(white="charlie", black="alice", content_hash="h2"))
+        count = storage.retag_colors_by_aliases(["alice"])
+        assert count == 2
+        assert storage.get_game(gid1)["my_color"] == "white"
+        assert storage.get_game(gid2)["my_color"] == "black"
+
+    def test_returns_count_of_updated_games(self, tmp_path):
+        _init(tmp_path)
+        storage.insert_game(_game(white="alice", black="bob", content_hash="h1"))
+        storage.insert_game(_game(white="charlie", black="dave", content_hash="h2"))
+        count = storage.retag_colors_by_aliases(["alice"])
+        assert count == 1  # only one game matched
+
+    def test_empty_aliases_returns_zero(self, tmp_path):
+        _init(tmp_path)
+        storage.insert_game(_game(white="alice", black="bob"))
+        count = storage.retag_colors_by_aliases([])
+        assert count == 0
+
+
+# ---------------------------------------------------------------------------
+# coverage
+# ---------------------------------------------------------------------------
+
+class TestCoverage:
+    def test_empty_db(self, tmp_path):
+        _init(tmp_path)
+        cov = storage.coverage()
+        assert cov == {"total": 0, "tagged": 0, "analyzed": 0, "pending": 0}
+
+    def test_counts_correctly(self, tmp_path):
+        _init(tmp_path)
+        gid1 = storage.insert_game(_game(content_hash="h1", my_color="white"))
+        gid2 = storage.insert_game(_game(content_hash="h2", my_color="black"))
+        storage.insert_game(_game(content_hash="h3"))  # no color
+        storage.set_status(gid1, "done")
+        storage.set_status(gid2, "done")
+        # third game stays 'pending'
+        cov = storage.coverage()
+        assert cov["total"] == 3
+        assert cov["tagged"] == 2
+        assert cov["analyzed"] == 2
+        assert cov["pending"] == 1
+
+    def test_analyzed_counts_only_done(self, tmp_path):
+        _init(tmp_path)
+        gid1 = storage.insert_game(_game(content_hash="h1"))
+        gid2 = storage.insert_game(_game(content_hash="h2"))
+        storage.set_status(gid1, "analyzing")
+        storage.set_status(gid2, "failed")
+        cov = storage.coverage()
+        assert cov["analyzed"] == 0
+        assert cov["pending"] == 0

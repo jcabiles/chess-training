@@ -639,3 +639,103 @@ def cancel_analysis(game_id: int) -> bool:
         task.cancel()
     _tasks.pop(game_id, None)
     return True
+
+
+# ---------------------------------------------------------------------------
+# Bulk-pending analysis
+# ---------------------------------------------------------------------------
+
+#: Sentinel key used to track the "analyze all pending" task in _tasks.
+#: Must not collide with any real game_id (which are positive ints).
+_ANALYZE_ALL_KEY: int = -1
+
+
+async def analyze_pending(engine: Any, **kw: Any) -> None:
+    """Walk all 'pending' games sequentially, analyzing each one.
+
+    The list of pending games is re-queried at the start of each iteration so
+    that games newly set to 'pending' (e.g. by retag) are picked up without
+    restarting the task.
+
+    No-starve: respects the same _interactive_pending counter as analyze_game.
+    Each game is dispatched via analyze_game which itself yields between plies.
+
+    On completion, removes the sentinel key from _tasks.
+    """
+    from app.engine import EngineUnavailable  # avoid circular at module top
+
+    try:
+        while True:
+            pending_games = [
+                g for g in storage.list_games()
+                if g.get("analysis_status") == "pending"
+            ]
+            if not pending_games:
+                break
+
+            for game in pending_games:
+                game_id = game["id"]
+
+                # Yield so interactive requests can be scheduled.
+                await asyncio.sleep(0)
+                while _interactive_pending > 0:
+                    await asyncio.sleep(_INTERACTIVE_POLL_INTERVAL)
+
+                # Set status and analyze (reuses start_analysis body logic but
+                # inline here so we can run sequentially without per-game tasks).
+                try:
+                    storage.set_status(game_id, "analyzing")
+                    await analyze_game(game_id, engine, **kw)
+                except asyncio.CancelledError:
+                    # Re-set the game to pending so a future run can pick it up.
+                    try:
+                        storage.set_status(game_id, "pending")
+                    except Exception:
+                        pass
+                    raise
+                except EngineUnavailable as exc:
+                    logger.error(
+                        "review: analyze_pending: game %d engine unavailable: %s",
+                        game_id, exc,
+                    )
+                    try:
+                        storage.set_status(game_id, "failed")
+                    except Exception:
+                        pass
+                except Exception as exc:
+                    logger.error(
+                        "review: analyze_pending: game %d unexpected error: %s",
+                        game_id, exc, exc_info=True,
+                    )
+                    try:
+                        storage.set_status(game_id, "failed")
+                    except Exception:
+                        pass
+
+    finally:
+        _tasks.pop(_ANALYZE_ALL_KEY, None)
+
+
+def start_analyze_all(engine: Any, **kw: Any) -> "asyncio.Task[None]":
+    """Start (or return the existing) bulk-pending analysis task.
+
+    If a task is already running under the sentinel key, it is returned as-is
+    (no-op — a second call while the first is running is safe).
+
+    Args:
+        engine: Engine instance (StockfishEngine or ScriptedEngine).
+        **kw:   Forwarded to analyze_game via analyze_pending (e.g. depth=).
+
+    Returns:
+        The running (or newly created) asyncio.Task.
+    """
+    existing = _tasks.get(_ANALYZE_ALL_KEY)
+    if existing is not None and not existing.done():
+        return existing
+
+    task: "asyncio.Task[None]" = asyncio.create_task(
+        analyze_pending(engine, **kw),
+        name="review-analyze-all",
+    )
+    _tasks[_ANALYZE_ALL_KEY] = task
+    return task

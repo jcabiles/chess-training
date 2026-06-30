@@ -31,11 +31,13 @@ import app.storage as storage
 from app.engine import AnalysisResult
 from app.review import (
     analyze_game,
+    analyze_pending,
     cancel_analysis,
     note_interactive_end,
     note_interactive_start,
     reset_stuck,
     start_analysis,
+    start_analyze_all,
 )
 from tests.engine_fakes import ScriptedEngine
 
@@ -890,3 +892,101 @@ class TestJobLifecycle:
         await asyncio.wait_for(task2, timeout=2.0)
         # task1 should have been cancelled.
         assert task1.cancelled() or task1.done()
+
+
+# ---------------------------------------------------------------------------
+# 5. Bulk-pending analysis (analyze_pending / start_analyze_all)
+# ---------------------------------------------------------------------------
+
+
+class TestAnalyzePending:
+    """analyze_pending walks all pending games sequentially."""
+
+    @pytest.mark.anyio
+    async def test_analyze_pending_processes_all_pending(self, tmp_path: Path):
+        """analyze_pending sets all pending games to 'done'."""
+        gid1 = _insert_game(my_color="white")
+        gid2 = _insert_game(my_color="black")
+
+        engine = ScriptedEngine()
+        await analyze_pending(engine, depth=8)
+
+        assert storage.get_game(gid1)["analysis_status"] == "done"
+        assert storage.get_game(gid2)["analysis_status"] == "done"
+
+    @pytest.mark.anyio
+    async def test_analyze_pending_skips_done_games(self, tmp_path: Path):
+        """analyze_pending does not re-analyze games already marked 'done'."""
+        gid1 = _insert_game(my_color="white")
+        storage.set_status(gid1, "done")  # already done
+
+        call_count = 0
+        orig_analyze = review.analyze_game
+
+        async def counting_analyze(game_id, engine, **kw):
+            nonlocal call_count
+            call_count += 1
+            await orig_analyze(game_id, engine, **kw)
+
+        review.analyze_game = counting_analyze
+        try:
+            engine = ScriptedEngine()
+            await analyze_pending(engine, depth=8)
+        finally:
+            review.analyze_game = orig_analyze
+
+        assert call_count == 0, "Should not call analyze_game for already-done games"
+
+    @pytest.mark.anyio
+    async def test_start_analyze_all_no_op_when_running(self, tmp_path: Path):
+        """A second call to start_analyze_all while one is running returns the same task."""
+        _insert_game(my_color="white")
+
+        note_interactive_start()  # keep the task blocked
+        try:
+            engine = ScriptedEngine()
+            task1 = start_analyze_all(engine, depth=8)
+            await asyncio.sleep(0)  # let the event loop schedule it
+
+            task2 = start_analyze_all(engine, depth=8)
+            assert task1 is task2, "Second call must return the same running task"
+        finally:
+            note_interactive_end()
+            # Let the task finish.
+            try:
+                await asyncio.wait_for(task1, timeout=2.0)
+            except Exception:
+                pass
+
+    @pytest.mark.anyio
+    async def test_start_analyze_all_task_removed_on_completion(self, tmp_path: Path):
+        """The sentinel key is removed from _tasks after the bulk task completes."""
+        _insert_game(my_color="white")
+        engine = ScriptedEngine()
+        task = start_analyze_all(engine, depth=8)
+        await asyncio.wait_for(task, timeout=5.0)
+        assert review._ANALYZE_ALL_KEY not in review._tasks
+
+    @pytest.mark.anyio
+    async def test_analyze_pending_sequential_order(self, tmp_path: Path):
+        """analyze_pending processes games one at a time (sequential, not concurrent)."""
+        gid1 = _insert_game(my_color="white")
+        gid2 = _insert_game(my_color="black")
+
+        order: list[int] = []
+        orig_analyze = review.analyze_game
+
+        async def tracking_analyze(game_id, engine, **kw):
+            order.append(game_id)
+            await orig_analyze(game_id, engine, **kw)
+
+        review.analyze_game = tracking_analyze
+        try:
+            engine = ScriptedEngine()
+            await analyze_pending(engine, depth=8)
+        finally:
+            review.analyze_game = orig_analyze
+
+        # Both games processed and in some order (not concurrently).
+        assert sorted(order) == sorted([gid1, gid2])
+        assert len(order) == 2  # each processed exactly once

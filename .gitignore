@@ -33,3 +33,6 @@ setup-mode.png
 data/games.db
 data/games/*
 !data/games/.gitkeep
+
+# Local machine-specific helper scripts (hardcoded ~/Downloads paths)
+scripts/
