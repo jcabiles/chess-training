@@ -1,0 +1,652 @@
+/* review.css — Review tab: game library, import, profile dashboard, foresight cards.
+   Tokens from style.css (:root). Follows panel.css / feedback.css conventions.
+   No raw hex — OKLCH only (matches the repo palette contract).
+   ------------------------------------------------------------------ */
+
+/* ==========================================================================
+   Review bar — board-column bar shown in review mode (mirrors trap-bar/rep-bar).
+   ========================================================================== */
+
+.review-bar {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  padding: var(--space-3) var(--space-4);
+  background: var(--surface-panel);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  margin-top: var(--space-3);
+}
+
+.review-bar-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+}
+
+.review-game-title {
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: var(--text);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+#review-return {
+  flex-shrink: 0;
+  padding: var(--space-1) var(--space-3);
+  background: var(--surface-raised);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  color: var(--text-secondary);
+  font-size: 0.82rem;
+  cursor: pointer;
+  transition: color var(--motion-fast) var(--ease-out),
+              border-color var(--motion-fast) var(--ease-out);
+}
+
+#review-return:hover,
+#review-return:focus-visible {
+  color: var(--text);
+  border-color: var(--accent);
+  outline: none;
+}
+
+/* ==========================================================================
+   Foresight card area
+   ========================================================================== */
+
+.review-foresight {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.review-foresight-card {
+  padding: var(--space-3);
+  border-radius: var(--radius-sm);
+  border-left: 3px solid var(--border);
+  background: var(--surface-raised);
+}
+
+.review-foresight-lead-in {
+  border-left-color: var(--q-mistake);
+}
+
+.review-foresight-tie-back {
+  border-left-color: var(--muted);
+  opacity: 0.85;
+}
+
+.review-foresight-hdr {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  margin-bottom: var(--space-2);
+}
+
+/* Severity badge */
+.review-severity {
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  padding: 1px var(--space-2);
+  border-radius: var(--radius-sm);
+  background: var(--surface-overlay);
+}
+
+.review-severity-blunder { color: var(--q-blunder); }
+.review-severity-mistake { color: var(--q-mistake); }
+
+.review-foresight-phase {
+  font-size: 0.75rem;
+  color: var(--muted);
+  text-transform: capitalize;
+}
+
+/* Narration buckets */
+.review-narration-bucket {
+  margin-bottom: var(--space-2);
+}
+
+.review-narration-summary {
+  border-top: 1px solid var(--border-subtle);
+  padding-top: var(--space-2);
+  margin-top: var(--space-1);
+}
+
+.review-bucket-label {
+  font-size: 0.72rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--accent);
+  margin-bottom: var(--space-1);
+}
+
+.review-bucket-text {
+  font-size: 0.85rem;
+  color: var(--text-secondary);
+  line-height: 1.5;
+  margin: 0;
+}
+
+/* Context row (category + win-prob drop) */
+.review-foresight-ctx {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  margin-top: var(--space-2);
+  flex-wrap: wrap;
+}
+
+.review-category {
+  font-size: 0.75rem;
+  color: var(--muted);
+  background: var(--surface-overlay);
+  padding: 1px var(--space-2);
+  border-radius: var(--radius-sm);
+}
+
+.review-win-drop {
+  font-size: 0.75rem;
+  color: var(--q-mistake);
+  font-variant-numeric: tabular-nums;
+}
+
+/* Tie-back */
+.review-foresight-tieback {
+  font-size: 0.83rem;
+  color: var(--text-secondary);
+  margin: 0 0 var(--space-1);
+  line-height: 1.4;
+}
+
+.review-foresight-best {
+  font-size: 0.8rem;
+  color: var(--accent);
+  margin: 0;
+  font-family: 'JetBrains Mono', monospace;
+}
+
+/* ==========================================================================
+   Tab-panel Review content (library + import + profile)
+   ========================================================================== */
+
+#tab-review {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+  padding: var(--space-4);
+  overflow-y: auto;
+}
+
+.review-section-hdr {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding-bottom: var(--space-2);
+  border-bottom: 1px solid var(--border-subtle);
+  margin-bottom: var(--space-3);
+}
+
+.review-section-title {
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: var(--text);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+.review-subsection-title {
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: var(--text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin: var(--space-3) 0 var(--space-2);
+}
+
+/* ==========================================================================
+   Game library list
+   ========================================================================== */
+
+.review-game-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.review-empty {
+  font-size: 0.85rem;
+  color: var(--muted);
+  padding: var(--space-4);
+  text-align: center;
+}
+
+.review-game-row {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  padding: var(--space-3);
+  background: var(--surface-raised);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-sm);
+  transition: border-color var(--motion-fast) var(--ease-out);
+}
+
+.review-game-row:hover {
+  border-color: var(--border);
+}
+
+.review-game-players {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  font-size: 0.88rem;
+  font-weight: 500;
+  color: var(--text);
+}
+
+.review-vs {
+  color: var(--muted);
+  font-size: 0.75rem;
+}
+
+.review-game-meta {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  flex-wrap: wrap;
+}
+
+.review-game-opening,
+.review-game-date {
+  font-size: 0.75rem;
+  color: var(--muted);
+}
+
+.review-badge {
+  font-size: 0.72rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  padding: 1px var(--space-2);
+  border-radius: var(--radius-sm);
+}
+
+.review-badge-win   { color: var(--q-best); background: oklch(18% 0.05 145); }
+.review-badge-loss  { color: var(--q-blunder); background: oklch(18% 0.05 22); }
+.review-badge-draw  { color: var(--q-inaccuracy); background: oklch(18% 0.05 85); }
+
+.review-status {
+  font-size: 0.72rem;
+  color: var(--muted);
+  text-transform: capitalize;
+  margin-left: auto;
+}
+
+.review-status-analyzing { color: var(--accent); }
+.review-status-done      { color: var(--q-best); }
+.review-status-failed    { color: var(--q-blunder); }
+
+.review-game-actions {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  flex-wrap: wrap;
+}
+
+.review-game-status-live {
+  font-size: 0.75rem;
+  color: var(--muted);
+  margin-left: auto;
+}
+
+/* ==========================================================================
+   Buttons (review-specific variants)
+   ========================================================================== */
+
+.review-btn {
+  padding: var(--space-1) var(--space-3);
+  background: var(--surface-overlay);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  color: var(--text-secondary);
+  font-size: 0.8rem;
+  cursor: pointer;
+  transition:
+    color var(--motion-fast) var(--ease-out),
+    border-color var(--motion-fast) var(--ease-out),
+    background var(--motion-fast) var(--ease-out);
+}
+
+.review-btn:hover:not(:disabled),
+.review-btn:focus-visible {
+  color: var(--text);
+  border-color: var(--accent);
+  outline: none;
+}
+
+.review-btn:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.review-btn-primary {
+  background: var(--accent-dim);
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
+.review-btn-primary:hover:not(:disabled) {
+  background: oklch(25% 0.09 231);
+}
+
+.review-btn-danger {
+  color: var(--q-blunder);
+  border-color: oklch(32% 0.07 22);
+}
+
+.review-btn-danger:hover:not(:disabled) {
+  border-color: var(--q-blunder);
+  background: oklch(18% 0.05 22);
+}
+
+/* File-input label styled as a button */
+.review-btn-file {
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+}
+
+input[type="file"].review-file-input {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  opacity: 0;
+  pointer-events: none;
+}
+
+/* ==========================================================================
+   Import controls
+   ========================================================================== */
+
+.review-import {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  padding: var(--space-3);
+  background: var(--surface-raised);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-sm);
+  margin-bottom: var(--space-3);
+}
+
+.review-import-title {
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: var(--text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.review-pgn-input {
+  width: 100%;
+  background: var(--surface-panel);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  color: var(--text);
+  font-size: 0.8rem;
+  font-family: 'JetBrains Mono', monospace;
+  padding: var(--space-2) var(--space-3);
+  resize: vertical;
+  min-height: 80px;
+  transition: border-color var(--motion-fast) var(--ease-out);
+}
+
+.review-pgn-input:focus {
+  outline: none;
+  border-color: var(--accent);
+}
+
+.review-pgn-input::placeholder {
+  color: var(--muted);
+}
+
+.review-import-file-row {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.review-import-options {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  flex-wrap: wrap;
+}
+
+.review-option-label {
+  font-size: 0.8rem;
+  color: var(--text-secondary);
+}
+
+.review-color-select {
+  background: var(--surface-panel);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  color: var(--text);
+  font-size: 0.8rem;
+  padding: var(--space-1) var(--space-2);
+  cursor: pointer;
+}
+
+.review-color-select:focus {
+  outline: 2px solid var(--accent);
+  outline-offset: 1px;
+}
+
+.review-import-status {
+  font-size: 0.8rem;
+  color: var(--muted);
+  min-height: 1.2em;
+}
+
+.review-import-status.success { color: var(--q-best); }
+.review-import-status.error   { color: var(--q-blunder); }
+
+/* ==========================================================================
+   Profile dashboard
+   ========================================================================== */
+
+.review-profile-wrap {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.review-profile-empty {
+  font-size: 0.85rem;
+  color: var(--muted);
+  padding: var(--space-3);
+  text-align: center;
+  background: var(--surface-raised);
+  border-radius: var(--radius-sm);
+  border: 1px dashed var(--border-subtle);
+}
+
+/* Stats row */
+.review-stats-row {
+  display: flex;
+  gap: var(--space-3);
+  flex-wrap: wrap;
+}
+
+.review-stat {
+  flex: 1;
+  min-width: 100px;
+  background: var(--surface-raised);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-sm);
+  padding: var(--space-3);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+}
+
+.review-stat-value {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: var(--accent);
+  font-variant-numeric: tabular-nums;
+}
+
+.review-stat-label {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.review-stat-sub {
+  font-size: 0.72rem;
+  color: var(--muted);
+  line-height: 1.3;
+}
+
+/* Leak list */
+.review-leak-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+}
+
+.review-leak-row {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-2) var(--space-3);
+  background: var(--surface-raised);
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border-subtle);
+}
+
+.review-leak-category {
+  flex: 1;
+  font-size: 0.85rem;
+  color: var(--text);
+  font-weight: 500;
+}
+
+.review-leak-coach {
+  font-size: 0.75rem;
+  color: var(--muted);
+  font-style: italic;
+}
+
+.review-leak-count {
+  font-size: 0.82rem;
+  font-weight: 700;
+  color: var(--accent);
+  font-variant-numeric: tabular-nums;
+}
+
+/* Phase / color rows */
+.review-phase-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+}
+
+.review-phase-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--space-1) var(--space-3);
+  background: var(--surface-raised);
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border-subtle);
+}
+
+.review-phase-name {
+  font-size: 0.82rem;
+  color: var(--text-secondary);
+  text-transform: capitalize;
+}
+
+.review-phase-count {
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: var(--accent);
+  font-variant-numeric: tabular-nums;
+}
+
+/* Opening list */
+.review-opening-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+}
+
+.review-opening-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--space-1) var(--space-3);
+  background: var(--surface-raised);
+  border-radius: var(--radius-sm);
+}
+
+.review-opening-name {
+  font-size: 0.82rem;
+  color: var(--text-secondary);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.review-opening-count {
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: var(--accent);
+  flex-shrink: 0;
+  margin-left: var(--space-2);
+  font-variant-numeric: tabular-nums;
+}
+
+/* Trend */
+.review-trend {
+  display: flex;
+  gap: var(--space-2);
+  flex-wrap: wrap;
+}
+
+.review-trend-bucket {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-1);
+  padding: var(--space-2);
+  background: var(--surface-raised);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-sm);
+  min-width: 60px;
+}
+
+.review-trend-date {
+  font-size: 0.7rem;
+  color: var(--muted);
+  text-align: center;
+}
+
+.review-trend-count {
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--accent);
+  font-variant-numeric: tabular-nums;
+}

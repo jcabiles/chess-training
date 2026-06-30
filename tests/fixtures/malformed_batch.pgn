@@ -1,0 +1,19 @@
+[Event "Good Game"]
+[Site "?"]
+[Date "2024.05.01"]
+[White "Player1"]
+[Black "Player2"]
+[Result "1-0"]
+
+1. e4 e5 2. Nf3 Nc6 1-0
+
+THIS IS NOT VALID PGN TEXT AT ALL $$$###@@@
+
+[Event "Another Good Game"]
+[Site "?"]
+[Date "2024.05.02"]
+[White "Player3"]
+[Black "Player4"]
+[Result "0-1"]
+
+1. d4 d5 2. c4 e6 3. Nc3 Nf6 0-1

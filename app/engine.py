@@ -213,6 +213,95 @@ class StockfishEngine:
 
     # -- analysis -----------------------------------------------------------
 
+    async def analyze_multi(
+        self,
+        fen: str,
+        depth: int = DEFAULT_DEPTH,
+        multipv: int = 1,
+    ) -> List[AnalysisResult]:
+        """Analyze a position to a fixed depth, returning up to *multipv* ranked lines.
+
+        Uses the SAME single ``asyncio.Lock`` + ``run_in_executor`` pattern as
+        :meth:`analyze`.  When ``multipv=1`` the list has exactly one element and
+        its score / PV match what :meth:`analyze` returns.
+
+        Args:
+            fen: The position to analyze, in Forsyth-Edwards Notation.
+            depth: Fixed search depth.  Defaults to ``DEFAULT_DEPTH``.
+            multipv: Number of distinct lines to return (best-first).
+
+        Returns:
+            A list of :class:`AnalysisResult`, index 0 = best line, length ≤ *multipv*.
+            (Fewer lines are returned when the position has fewer legal moves than
+            *multipv*.)
+
+        Raises:
+            EngineUnavailable: if the binary is missing or the engine cannot run.
+            ValueError: if ``fen`` is not a valid FEN.
+        """
+        try:
+            board = chess.Board(fen)
+        except ValueError as exc:
+            raise ValueError(f"Invalid FEN: {fen!r} ({exc})") from exc
+
+        async with self._lock:
+            if self._engine is None:
+                self.start()
+            engine = self._engine
+            assert engine is not None
+
+            loop = asyncio.get_running_loop()
+
+            def _run_multi() -> List[chess_engine.InfoDict]:
+                # engine.analyse returns List[InfoDict] when multipv is an int,
+                # ranked best-first by python-chess.
+                result = engine.analyse(
+                    board,
+                    chess_engine.Limit(depth=depth),
+                    multipv=multipv,
+                )
+                # Normalise: always return a list (multipv=None returns a bare dict).
+                if isinstance(result, list):
+                    return result
+                return [result]
+
+            try:
+                infos = await loop.run_in_executor(None, _run_multi)
+            except chess_engine.EngineError as exc:
+                raise EngineUnavailable(f"Stockfish analysis failed: {exc}") from exc
+            except chess_engine.EngineTerminatedError as exc:
+                self._engine = None
+                raise EngineUnavailable(
+                    f"Stockfish process terminated unexpectedly: {exc}"
+                ) from exc
+
+        # --- post-processing (outside the lock; pure, no engine access) ---
+
+        results: List[AnalysisResult] = []
+        for info in infos:
+            score: chess_engine.PovScore = info["score"]
+            pv: List[chess.Move] = list(info.get("pv", []))
+
+            pv_san: List[str] = []
+            san_board = board.copy()
+            for move in pv:
+                try:
+                    pv_san.append(san_board.san(move))
+                    san_board.push(move)
+                except (AssertionError, ValueError):
+                    break
+
+            results.append(
+                AnalysisResult(
+                    score=score,
+                    pv=pv,
+                    pv_san=pv_san,
+                    depth=info.get("depth"),
+                )
+            )
+
+        return results
+
     async def analyze(self, fen: str, depth: int = DEFAULT_DEPTH) -> AnalysisResult:
         """Analyze a position to a fixed depth.
 

@@ -188,3 +188,140 @@ class LoadResponse(BaseModel):
     error: str | None = Field(
         default=None, description="Validation error message; None if valid."
     )
+
+
+# ---------------------------------------------------------------------------
+# Games / review / profile models (additive — T7)
+# ---------------------------------------------------------------------------
+
+
+class ImportRequest(BaseModel):
+    """Body for ``POST /api/games/import`` — paste PGN text, optional color override."""
+
+    pgn: str = Field(max_length=5_000_000, description="Raw PGN text containing one or more games.")
+    my_color: str | None = Field(
+        default=None,
+        description=(
+            "Override the inferred player color for every game in this import batch. "
+            "Accepted values: 'white', 'black', or null to use the CHESS_USERNAME inference."
+        ),
+    )
+
+
+class GameSummary(BaseModel):
+    """One row from the games table — lightweight, for list views."""
+
+    id: int = Field(description="Database row ID.")
+    white: str | None = Field(default=None, description="White player name.")
+    black: str | None = Field(default=None, description="Black player name.")
+    result: str | None = Field(default=None, description="PGN result string.")
+    eco: str | None = Field(default=None, description="ECO code.")
+    opening: str | None = Field(default=None, description="Opening name.")
+    date: str | None = Field(default=None, description="PGN Date header.")
+    my_color: str | None = Field(default=None, description="Player color ('white'/'black'/None).")
+    ply_count: int | None = Field(default=None, description="Total half-moves in the game.")
+    analysis_status: str = Field(
+        description="Analysis status: 'pending'|'analyzing'|'done'|'failed'."
+    )
+    imported_at: str = Field(description="ISO timestamp of import.")
+
+
+class PlyDetail(BaseModel):
+    """One half-move with eval data — for the replay UI."""
+
+    ply: int = Field(description="1-based ply number.")
+    san: str | None = Field(default=None, description="Move in SAN.")
+    uci: str | None = Field(default=None, description="Move in UCI.")
+    fen_before: str | None = Field(default=None, description="FEN of the board before this move.")
+    eval_cp_white: int | None = Field(default=None, description="Eval in centipawns, White POV.")
+    mate_white: int | None = Field(default=None, description="Mate-in-N, White POV.")
+    win_prob: float | None = Field(default=None, description="Win probability for the side to move.")
+    is_user_move: bool = Field(default=False, description="True when this ply was made by the user.")
+    clock_centis: int | None = Field(default=None, description="Remaining clock in centiseconds.")
+
+
+class GameDetail(BaseModel):
+    """Full game record including per-ply data for replay."""
+
+    id: int
+    white: str | None = None
+    black: str | None = None
+    result: str | None = None
+    eco: str | None = None
+    opening: str | None = None
+    date: str | None = None
+    my_color: str | None = None
+    ply_count: int | None = None
+    analysis_status: str
+    imported_at: str
+    pgn: str = Field(description="Raw PGN text.")
+    plies: list[PlyDetail] = Field(
+        default_factory=list,
+        description="Per-ply data for replay; empty until analysis completes.",
+    )
+
+
+class ImportResponse(BaseModel):
+    """Response for ``POST /api/games/import``."""
+
+    imported: int = Field(description="Number of new games persisted.")
+    duplicates: int = Field(description="Number of games skipped as duplicates.")
+    games: list[GameSummary] = Field(
+        description="Summaries of all games in the import batch (new + duplicates)."
+    )
+
+
+class NarratedLeak(BaseModel):
+    """One leak with coach narration, for the foresight UI."""
+
+    id: int | None = Field(default=None)
+    ply: int
+    lead_in_ply: int | None = Field(default=None)
+    severity: str
+    category: str
+    phase: str
+    win_prob_before: float
+    win_prob_after: float
+    win_prob_drop: float
+    best_san: str | None = Field(default=None)
+    best_uci: str | None = Field(default=None)
+    threat_uci: str | None = Field(default=None)
+    threat_motif: str | None = Field(default=None)
+    hung_square: str | None = Field(default=None)
+    narration: dict = Field(
+        description="DecodeChess-style bucketed foresight text from the narrator."
+    )
+
+
+class ReviewResponse(BaseModel):
+    """Response for ``GET /api/games/{game_id}/review``."""
+
+    game_id: int
+    analysis_status: str
+    leaks: list[NarratedLeak] = Field(default_factory=list)
+    plies: list[PlyDetail] = Field(
+        default_factory=list,
+        description="Per-ply evals for the foresight eval graph.",
+    )
+
+
+class AnalyzeStatusResponse(BaseModel):
+    """Response for ``GET /api/games/{game_id}/status``."""
+
+    game_id: int
+    analysis_status: str
+
+
+class ProfileResponse(BaseModel):
+    """Response for ``GET /api/profile``."""
+
+    games_analyzed: int
+    top_leaks: list[dict] = Field(
+        default_factory=list,
+        description="Top leak categories with count and coach cluster name.",
+    )
+    by_phase: dict = Field(default_factory=dict)
+    by_opening: list[dict] = Field(default_factory=list)
+    by_color: dict = Field(default_factory=dict)
+    hope_chess_rate: float
+    trend: list[dict] = Field(default_factory=list)

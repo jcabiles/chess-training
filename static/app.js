@@ -27,6 +27,7 @@ import { formatEval } from './format.js';
 import { initMovelist } from './movelist.js';
 import { initFeedback } from './feedback.js';
 import { initShortcuts } from './shortcuts.js';
+import { initReview } from './review.js';
 
 const EMPTY_PLACEMENT = '8/8/8/8/8/8/8/8';
 const INITIAL_PLACEMENT = INITIAL_FEN.split(' ')[0];
@@ -69,6 +70,7 @@ let repTree = null;        // /api/repertoire tree: { white, black, catalog }
 let rep = null;            // active rep-practice session (see startRepPractice)
 let repSnapshot = null;    // saved play game captured when entering rep-practice
 let repEngineToken = 0;    // guards stale async engine-opponent replies (take-back/restart/exit)
+let reviewSnapshot = null; // saved play state captured when entering review mode (transient)
 
 const byId = (id) => document.getElementById(id);
 
@@ -107,6 +109,7 @@ function persist() {
   if (state.mode === 'trap-watch') return;   // trap modes are transient — never persisted
   if (state.mode === 'trap-practice') return;// (both watch + practice)
   if (state.mode === 'rep-practice') return; // repertoire practice is transient too
+  if (state.mode === 'review') return;       // review replay is transient — same precedent
   try {
     let data;
     if (state.mode === 'setup') {
@@ -204,11 +207,28 @@ function lastMoveSquares(uci) {
   return [uci.slice(0, 2), uci.slice(2, 4)];
 }
 
-// --- board sync (play mode) ------------------------------------------------
+// --- board sync (play mode + review mode) -----------------------------------
+//
+// In review mode the board is view-only (no movable dests, no drag).
+// In play mode the board shows legal dests for the side to move.
+// Both modes emit 'position:change' so movelist re-renders.
 
 function syncBoard() {
   const { pos, lastMove } = positionAt(state.cursor);
   const fen = fenOf(pos);
+  if (state.mode === 'review') {
+    ground.set({
+      fen: fen.split(' ')[0],
+      turnColor: pos.turn,
+      orientation: state.orientation,
+      lastMove: lastMoveSquares(lastMove),
+      movable: { free: false, color: undefined, dests: undefined },
+      draggable: { enabled: false },
+    });
+    emit('position:change');
+    emit('review:ply', state.cursor);
+    return;
+  }
   ground.set({
     fen: fen.split(' ')[0],
     turnColor: pos.turn,
@@ -462,12 +482,18 @@ function redo() {
 }
 
 // Jump to an arbitrary ply (move-list click / Home / End). Mirrors undo/redo.
+// Broadened to support 'review' mode (Refuter resolution #3): in review mode
+// we sync the board and emit review:ply instead of refreshing analysis/opening.
 function goto(n) {
-  if (state.mode !== 'play') return;
+  if (state.mode !== 'play' && state.mode !== 'review') return;
   const target = Math.min(Math.max(0, n | 0), state.moves.length);
   if (target === state.cursor) return;
   state.cursor = target;
   syncBoard();
+  if (state.mode === 'review') {
+    emit('review:ply', state.cursor);
+    return; // no analysis refresh or persist in review mode
+  }
   refreshAnalysis();
   refreshOpeningThenTraps();
   persist();
@@ -1751,6 +1777,88 @@ function repBack() {
   repAdvance();
 }
 
+// --- review mode -----------------------------------------------------------
+//
+// Enters a transient 'review' mode that loads a saved game's {baseFen, moves}
+// onto the existing board. Mirrors the trap/rep snapshot pattern: the play
+// session is saved into reviewSnapshot and is NEVER persisted.
+// `goto()` emits 'review:ply' so review.js can drive foresight cards.
+
+function showReviewUI(on) {
+  byId('review-bar').hidden = !on;
+  document.body.classList.toggle('review-mode', on);
+  if (on) byId('trap-chip').hidden = true;
+}
+
+// Enter review mode for a saved game. Called from review.js via api.actions.
+// `gameDetail` is a GameDetail object from GET /api/games/{id}: {id, white, black,
+//  result, baseFen?, moves?, plies, analysis_status, ...}
+// We reconstruct baseFen from the first ply's fen_before (or the standard start),
+// and moves from the plies' uci fields.
+function enterReview(gameDetail) {
+  // Snapshot current play session (same precedent as trap/rep).
+  if (state.mode === 'play') {
+    reviewSnapshot = {
+      baseFen: state.baseFen,
+      moves: state.moves.slice(),
+      moveQuality: state.moveQuality.slice(),
+      cursor: state.cursor,
+    };
+  }
+
+  // Derive baseFen + moves from the plies array or fallback to INITIAL_FEN.
+  const plies = (gameDetail.plies && gameDetail.plies.length) ? gameDetail.plies : [];
+  const baseFen = (plies.length && plies[0].fen_before) ? plies[0].fen_before : INITIAL_FEN;
+  const moves = plies.map((p) => p.uci).filter(Boolean);
+
+  state.baseFen = baseFen;
+  state.moves = moves;
+  state.moveQuality = [];
+  state.cursor = 0;
+
+  setMode('review');
+  showReviewUI(true);
+
+  // Set the game title.
+  const white = gameDetail.white || '?';
+  const black = gameDetail.black || '?';
+  const result = gameDetail.result || '';
+  byId('review-game-title').textContent = `${white} vs ${black}${result ? ' · ' + result : ''}`;
+
+  // Sync the board to the start position (view-only — no legal dests).
+  const pos = positionFromFen(baseFen);
+  ground.set({
+    fen: baseFen.split(' ')[0],
+    turnColor: pos.turn,
+    orientation: state.orientation,
+    lastMove: undefined,
+    movable: { free: false, color: undefined, dests: undefined },
+    draggable: { enabled: false },
+  });
+
+  // Emit position:change so movelist re-renders (broadened to accept review mode).
+  emit('position:change');
+  // Emit review:ply at ply 0 so foresight initializes.
+  emit('review:ply', 0);
+}
+
+// Exit review mode and restore the saved play snapshot.
+function exitReview() {
+  const snap = reviewSnapshot || { baseFen: INITIAL_FEN, moves: [], cursor: 0 };
+  state.baseFen = snap.baseFen;
+  state.moves = snap.moves;
+  state.moveQuality = snap.moveQuality || [];
+  state.cursor = snap.cursor;
+  setMode('play');
+  reviewSnapshot = null;
+  showReviewUI(false);
+  ground.set({ highlight: { lastMove: true, check: true } });
+  syncBoard();
+  refreshAnalysis();
+  refreshOpeningThenTraps();
+  persist();
+}
+
 // --- init ------------------------------------------------------------------
 
 function init() {
@@ -1807,6 +1915,8 @@ function init() {
       getState: () => state,
       getGround: () => ground,
       closeAnyDialog,
+      enterReview,           // called by review.js when the user opens a saved game
+      exitReview,            // called by review.js "Return to my game"
     },
     on,
     emit,
@@ -1834,7 +1944,7 @@ function init() {
         b.classList.toggle('is-active', on);
         b.setAttribute('aria-selected', String(on));
       });
-      ['analysis', 'opening', 'traps', 'repertoire'].forEach((name) => {
+      ['analysis', 'opening', 'traps', 'repertoire', 'review'].forEach((name) => {
         const panel = byId(`tab-${name}`);
         if (panel) panel.classList.toggle('is-active', name === tabName);
       });
@@ -1846,6 +1956,7 @@ function init() {
   initMovelist(api);
   initFeedback(api);
   initShortcuts(api);
+  initReview(api);
 
   // Own board clicks for setup stamping (capture phase, before chessground).
   const boardEl = byId('board');
@@ -1900,6 +2011,9 @@ function init() {
   byId('trap-back').addEventListener('click', trapBack);
   byId('trap-reveal-move').addEventListener('click', revealTrapMove);
   byId('trap-show-refutation').addEventListener('click', showTrapRefutation);
+
+  // Review replay bar controls
+  byId('review-return').addEventListener('click', exitReview);
 
   // Repertoire practice bar controls
   byId('rep-return').addEventListener('click', exitRepPractice);

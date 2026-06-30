@@ -13,13 +13,19 @@ import pytest
 
 from app.analysis import (
     BEST_MAX,
+    BLUNDER_WP_DROP,
     GOOD_MAX,
     INACCURACY_MAX,
     MATE_CP,
     MISTAKE_MAX,
+    MISTAKE_WP_DROP,
     bucket,
     classify,
+    game_phase,
+    leak_severity,
     pov_score_to_white_cp,
+    win_prob_from_cp,
+    win_prob_white,
 )
 
 # --- pov_score_to_white_cp: centipawn scores ---------------------------------
@@ -165,3 +171,137 @@ def test_classify_faster_mate_is_small_loss():
     )
     # White goes from M5 to M3 (faster) -> White improved -> clamps to best.
     assert classify(before, after, mover_is_white=True) == "best"
+
+
+# ---------------------------------------------------------------------------
+# T3 additions: win_prob_from_cp
+# ---------------------------------------------------------------------------
+
+
+def test_win_prob_at_zero_is_half():
+    assert abs(win_prob_from_cp(0) - 0.5) < 1e-6
+
+
+def test_win_prob_symmetric_around_zero():
+    """win_prob(cp) + win_prob(-cp) == 1.0 for all cp."""
+    for cp in (1, 50, 100, 250, 500, 1000):
+        total = win_prob_from_cp(cp) + win_prob_from_cp(-cp)
+        assert abs(total - 1.0) < 1e-9, f"symmetry failed at cp={cp}: {total}"
+
+
+def test_win_prob_monotonically_increasing():
+    """Higher cp advantage → higher win probability."""
+    cps = list(range(-500, 501, 50))
+    probs = [win_prob_from_cp(cp) for cp in cps]
+    for i in range(len(probs) - 1):
+        assert probs[i] <= probs[i + 1], (
+            f"Not monotonic: win_prob({cps[i]})={probs[i]} "
+            f"> win_prob({cps[i + 1]})={probs[i + 1]}"
+        )
+
+
+def test_win_prob_clamped_to_unit_interval():
+    """Result is always in [0, 1] even for extreme values."""
+    assert 0.0 <= win_prob_from_cp(100_000) <= 1.0
+    assert 0.0 <= win_prob_from_cp(-100_000) <= 1.0
+
+
+def test_win_prob_large_advantage_approaches_one():
+    assert win_prob_from_cp(2000) > 0.99
+
+
+def test_win_prob_large_disadvantage_approaches_zero():
+    assert win_prob_from_cp(-2000) < 0.01
+
+
+# ---------------------------------------------------------------------------
+# T3 additions: win_prob_white
+# ---------------------------------------------------------------------------
+
+
+def test_win_prob_white_mate_for_white():
+    assert win_prob_white(None, 3) == 1.0
+
+
+def test_win_prob_white_mate_for_black():
+    assert win_prob_white(None, -3) == 0.0
+
+
+def test_win_prob_white_uses_cp_when_no_mate():
+    prob = win_prob_white(100, None)
+    assert abs(prob - win_prob_from_cp(100)) < 1e-9
+
+
+def test_win_prob_white_unknown_eval_is_half():
+    assert win_prob_white(None, None) == 0.5
+
+
+# ---------------------------------------------------------------------------
+# T3 additions: game_phase
+# ---------------------------------------------------------------------------
+
+
+def test_game_phase_start_position_is_opening():
+    assert game_phase(chess.Board()) == "opening"
+
+
+def test_game_phase_king_vs_king_is_endgame():
+    board = chess.Board("8/8/8/8/4K3/8/8/4k3 w - - 0 1")
+    assert game_phase(board) == "endgame"
+
+
+def test_game_phase_rook_endgame_is_endgame():
+    # Two kings and two rooks — low material total.
+    board = chess.Board("4k3/8/8/8/8/8/8/4K2R w - - 0 1")
+    assert game_phase(board) == "endgame"
+
+
+def test_game_phase_full_pieces_is_opening():
+    # Full opening material: 2N+2B+2R+Q per side → total = 2*3+2*3+2*5+9 = 39 per side = 78.
+    assert game_phase(chess.Board()) == "opening"
+
+
+@pytest.mark.parametrize(
+    "fen, expected",
+    [
+        # K+Q+R+R vs k — 9+5+5 = 19 for White only = 19 total → endgame (<24).
+        ("4k3/8/8/8/8/8/8/1KQ1RR2 w - - 0 1", "endgame"),
+        # K+Q+R+R vs k+q+r+r — 19*2=38 → middlegame (24..55).
+        ("1kq1rr2/8/8/8/8/8/8/1KQ1RR2 w - - 0 1", "middlegame"),
+    ],
+)
+def test_game_phase_boundaries(fen, expected):
+    assert game_phase(chess.Board(fen)) == expected
+
+
+# ---------------------------------------------------------------------------
+# T3 additions: leak_severity
+# ---------------------------------------------------------------------------
+
+
+def test_leak_severity_below_mistake_is_none():
+    assert leak_severity(0.0) == "none"
+    assert leak_severity(MISTAKE_WP_DROP - 0.001) == "none"
+
+
+def test_leak_severity_at_mistake_threshold():
+    assert leak_severity(MISTAKE_WP_DROP) == "mistake"
+
+
+def test_leak_severity_between_thresholds_is_mistake():
+    mid = (MISTAKE_WP_DROP + BLUNDER_WP_DROP) / 2
+    assert leak_severity(mid) == "mistake"
+
+
+def test_leak_severity_at_blunder_threshold():
+    assert leak_severity(BLUNDER_WP_DROP) == "blunder"
+
+
+def test_leak_severity_above_blunder_is_blunder():
+    assert leak_severity(BLUNDER_WP_DROP + 0.1) == "blunder"
+    assert leak_severity(1.0) == "blunder"
+
+
+def test_leak_severity_constants_are_sane():
+    """Sanity-check the level-tuned thresholds are reasonable."""
+    assert 0 < MISTAKE_WP_DROP < BLUNDER_WP_DROP < 1.0

@@ -18,6 +18,7 @@ from __future__ import annotations
 
 import logging
 from contextlib import asynccontextmanager
+from datetime import datetime, timezone
 from pathlib import Path
 
 import chess
@@ -25,18 +26,37 @@ from fastapi import Depends, FastAPI, Request
 from fastapi.responses import FileResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
 
-from app import book, openings, repertoire, traps
+from app import (
+    book,
+    coaching,
+    openings,
+    pgn,
+    profile,
+    repertoire,
+    review,
+    storage,
+    traps,
+)
 from app.analysis import classify, pov_score_to_white_cp
 from app.engine import AnalysisResult, EngineUnavailable, StockfishEngine
 from app.models import (
     Analysis,
     AnalyzeRequest,
     AnalyzeResponse,
+    AnalyzeStatusResponse,
+    GameDetail,
+    GameSummary,
+    ImportRequest,
+    ImportResponse,
     LoadRequest,
     LoadResponse,
     MoveRequest,
     MoveResponse,
+    NarratedLeak,
     OpeningRequest,
+    PlyDetail,
+    ProfileResponse,
+    ReviewResponse,
     TrapsCheckRequest,
 )
 
@@ -49,6 +69,7 @@ OPENINGS_DIR = BASE_DIR / "data" / "openings"
 TRAPS_FILE = BASE_DIR / "data" / "traps.json"
 BOOK_FILE = BASE_DIR / "data" / "book.json"
 REPERTOIRE_FILE = BASE_DIR / "data" / "repertoire.json"
+GAMES_DIR = BASE_DIR / "data" / "games"
 
 
 # ---------------------------------------------------------------------------
@@ -85,10 +106,60 @@ async def lifespan(app: FastAPI):
     except Exception as exc:  # pragma: no cover - defensive; book degrades to empty
         logger.warning("Opening book unavailable (continuing without it): %s", exc)
 
+    # Game-review storage: init DB, scan data/games/ for PGN files, reset stuck jobs.
+    storage.init()
+    _import_games_folder()
+    try:
+        review.reset_stuck()
+    except Exception as exc:
+        logger.warning("review: reset_stuck failed at startup: %s", exc)
+
     try:
         yield
     finally:
         engine.close()
+
+
+def _import_games_folder() -> None:
+    """Scan data/games/ for *.pgn files and import them into storage (deduped).
+
+    Wraps each file in try/except so a bad PGN file never crashes startup.
+    """
+    if not GAMES_DIR.is_dir():
+        return
+    now = datetime.now(timezone.utc).isoformat()
+    for pgn_path in GAMES_DIR.glob("*.pgn"):
+        try:
+            text = pgn_path.read_text(encoding="utf-8", errors="replace")
+            parsed_games = pgn.parse_games(text)
+            for g in parsed_games:
+                try:
+                    gid = storage.insert_game({
+                        "content_hash": g.content_hash,
+                        "pgn": g.pgn,
+                        "headers_json": None,
+                        "white": g.white,
+                        "black": g.black,
+                        "result": g.result,
+                        "eco": g.eco,
+                        "opening": g.opening,
+                        "date": g.date,
+                        "my_color": g.my_color,
+                        "source": str(pgn_path.name),
+                        "ply_count": g.ply_count,
+                        "imported_at": now,
+                    })
+                    # Write per-ply rows if not already present (backfills dedup re-imports).
+                    if not storage.get_plies(gid):
+                        storage.write_plies(gid, [
+                            {"ply": p.ply, "san": p.san, "uci": p.uci,
+                             "fen_before": p.fen_before, "clock_centis": p.clock_centis}
+                            for p in g.plies
+                        ])
+                except Exception as exc:
+                    logger.warning("startup import: failed to insert game from %s: %s", pgn_path.name, exc)
+        except Exception as exc:
+            logger.warning("startup import: failed to read/parse %s: %s", pgn_path.name, exc)
 
 
 app = FastAPI(title="Stockfish Analysis Board", lifespan=lifespan)
@@ -224,11 +295,14 @@ async def make_move(req: MoveRequest, engine: StockfishEngine = Depends(get_engi
             openingEco=opening["eco"] if opening else None,
         )
 
+    review.note_interactive_start()
     try:
         before = await engine.analyze(fen_before)
         after = await engine.analyze(fen_after)
     except EngineUnavailable:
         return _engine_unavailable_response()
+    finally:
+        review.note_interactive_end()
 
     quality = classify(
         pov_score_to_white_cp(before.score),
@@ -308,6 +382,298 @@ async def get_trap(trap_id: str):
     if trap is None:
         return JSONResponse(status_code=404, content={"detail": f"Trap {trap_id!r} not found."})
     return trap
+
+
+# ---------------------------------------------------------------------------
+# Game library + review routes (additive; degrade gracefully when storage absent)
+#
+# IMPORTANT: literal paths (e.g. /api/games/import) are registered BEFORE
+# parameterised paths (/api/games/{game_id}) so FastAPI never matches the
+# literal segment as a game_id value.  This mirrors the traps precedent above.
+# ---------------------------------------------------------------------------
+
+def _game_summary(row: dict) -> GameSummary:
+    """Build a GameSummary from a storage row dict."""
+    return GameSummary(
+        id=row["id"],
+        white=row.get("white"),
+        black=row.get("black"),
+        result=row.get("result"),
+        eco=row.get("eco"),
+        opening=row.get("opening"),
+        date=row.get("date"),
+        my_color=row.get("my_color"),
+        ply_count=row.get("ply_count"),
+        analysis_status=row.get("analysis_status", "pending"),
+        imported_at=row["imported_at"],
+    )
+
+
+# IMPORTANT: /api/games/import is registered BEFORE /api/games/{game_id}.
+@app.post("/api/games/import", response_model=ImportResponse)
+async def import_games(req: ImportRequest):
+    """Import one or more PGN games from pasted text.
+
+    Parses the PGN, inserts each game (deduped by content_hash), and applies
+    the optional ``my_color`` override to every game in the batch.
+    Returns imported/duplicate counts and summaries of all games in the batch.
+    """
+    now = datetime.now(timezone.utc).isoformat()
+    try:
+        parsed_games = pgn.parse_games(req.pgn)
+    except Exception as exc:
+        return JSONResponse(status_code=400, content={"detail": f"PGN parse error: {exc}"})
+
+    imported = 0
+    duplicates = 0
+    summaries: list[GameSummary] = []
+
+    for g in parsed_games:
+        # Apply per-request my_color override (Refuter #8).
+        my_color = req.my_color if req.my_color is not None else g.my_color
+        fields = {
+            "content_hash": g.content_hash,
+            "pgn": g.pgn,
+            "headers_json": None,
+            "white": g.white,
+            "black": g.black,
+            "result": g.result,
+            "eco": g.eco,
+            "opening": g.opening,
+            "date": g.date,
+            "my_color": my_color,
+            "source": "import",
+            "ply_count": g.ply_count,
+            "imported_at": now,
+        }
+        try:
+            # Check whether the game already exists before inserting.
+            from app.storage import _get_conn  # noqa: PLC0415
+            conn = _get_conn()
+            existing = conn.execute(
+                "SELECT id FROM games WHERE content_hash = ?", (g.content_hash,)
+            ).fetchone()
+            game_id = storage.insert_game(fields)
+            if existing is None:
+                imported += 1
+            else:
+                duplicates += 1
+            # Write per-ply rows if not already present (backfills dedup re-imports).
+            if not storage.get_plies(game_id):
+                storage.write_plies(game_id, [
+                    {"ply": p.ply, "san": p.san, "uci": p.uci,
+                     "fen_before": p.fen_before, "clock_centis": p.clock_centis}
+                    for p in g.plies
+                ])
+            row = storage.get_game(game_id)
+            if row:
+                summaries.append(_game_summary(row))
+        except Exception as exc:
+            logger.warning("import: failed to insert game: %s", exc)
+
+    return ImportResponse(imported=imported, duplicates=duplicates, games=summaries)
+
+
+@app.get("/api/games", response_model=list[GameSummary])
+async def list_games():
+    """Return all saved games, most recently imported first."""
+    try:
+        rows = storage.list_games()
+    except Exception:
+        return []
+    return [_game_summary(r) for r in rows]
+
+
+@app.get("/api/games/{game_id}", response_model=GameDetail)
+async def get_game(game_id: int):
+    """Return a single saved game with per-ply data, or 404 if not found."""
+    try:
+        row = storage.get_game(game_id)
+    except Exception:
+        row = None
+    if row is None:
+        return JSONResponse(status_code=404, content={"detail": f"Game {game_id} not found."})
+
+    try:
+        ply_rows = storage.get_plies(game_id)
+    except Exception:
+        ply_rows = []
+
+    plies = [
+        PlyDetail(
+            ply=p["ply"],
+            san=p.get("san"),
+            uci=p.get("uci"),
+            fen_before=p.get("fen_before"),
+            eval_cp_white=p.get("eval_cp_white"),
+            mate_white=p.get("mate_white"),
+            win_prob=p.get("win_prob"),
+            is_user_move=bool(p.get("is_user_move", 0)),
+            clock_centis=p.get("clock_centis"),
+        )
+        for p in ply_rows
+    ]
+
+    return GameDetail(
+        id=row["id"],
+        white=row.get("white"),
+        black=row.get("black"),
+        result=row.get("result"),
+        eco=row.get("eco"),
+        opening=row.get("opening"),
+        date=row.get("date"),
+        my_color=row.get("my_color"),
+        ply_count=row.get("ply_count"),
+        analysis_status=row.get("analysis_status", "pending"),
+        imported_at=row["imported_at"],
+        pgn=row.get("pgn", ""),
+        plies=plies,
+    )
+
+
+@app.post("/api/games/{game_id}/analyze", response_model=AnalyzeStatusResponse)
+async def analyze_game_route(
+    game_id: int, engine: StockfishEngine = Depends(get_engine)
+):
+    """Start background analysis for a saved game.
+
+    Returns an accepted response. The job status can be polled via
+    GET /api/games/{game_id}/status. Engine failures are handled inside the
+    background task (status moves to 'failed') rather than at route level.
+    """
+    try:
+        row = storage.get_game(game_id)
+    except Exception:
+        row = None
+    if row is None:
+        return JSONResponse(status_code=404, content={"detail": f"Game {game_id} not found."})
+
+    review.start_analysis(game_id, engine, depth=review.BACKGROUND_DEPTH)
+
+    # Re-fetch status after starting (it should be 'analyzing' now).
+    try:
+        row = storage.get_game(game_id)
+        status = row.get("analysis_status", "analyzing") if row else "analyzing"
+    except Exception:
+        status = "analyzing"
+
+    return AnalyzeStatusResponse(game_id=game_id, analysis_status=status)
+
+
+@app.get("/api/games/{game_id}/status", response_model=AnalyzeStatusResponse)
+async def get_game_status(game_id: int):
+    """Return the analysis status for a game."""
+    try:
+        row = storage.get_game(game_id)
+    except Exception:
+        row = None
+    if row is None:
+        return JSONResponse(status_code=404, content={"detail": f"Game {game_id} not found."})
+    return AnalyzeStatusResponse(
+        game_id=game_id,
+        analysis_status=row.get("analysis_status", "pending"),
+    )
+
+
+@app.get("/api/games/{game_id}/review", response_model=ReviewResponse)
+async def get_game_review(game_id: int):
+    """Return narrated leaks + per-ply evals for the foresight UI."""
+    try:
+        row = storage.get_game(game_id)
+    except Exception:
+        row = None
+    if row is None:
+        return JSONResponse(status_code=404, content={"detail": f"Game {game_id} not found."})
+
+    status = row.get("analysis_status", "pending")
+
+    try:
+        leak_rows = storage.get_leaks(game_id)
+    except Exception:
+        leak_rows = []
+
+    try:
+        ply_rows = storage.get_plies(game_id)
+    except Exception:
+        ply_rows = []
+
+    narrator = coaching.get_narrator()
+    narrated: list[NarratedLeak] = []
+    for lk in leak_rows:
+        try:
+            narration = narrator.narrate_leak(lk)
+        except Exception:
+            narration = {"threat": None, "hanging": None, "plan": None, "summary": ""}
+        narrated.append(NarratedLeak(
+            id=lk.get("id") if isinstance(lk, dict) else getattr(lk, "id", None),
+            ply=lk["ply"] if isinstance(lk, dict) else lk.ply,
+            lead_in_ply=lk.get("lead_in_ply") if isinstance(lk, dict) else lk.lead_in_ply,
+            severity=lk["severity"] if isinstance(lk, dict) else lk.severity,
+            category=lk["category"] if isinstance(lk, dict) else lk.category,
+            phase=lk["phase"] if isinstance(lk, dict) else lk.phase,
+            win_prob_before=lk["win_prob_before"] if isinstance(lk, dict) else lk.win_prob_before,
+            win_prob_after=lk["win_prob_after"] if isinstance(lk, dict) else lk.win_prob_after,
+            win_prob_drop=lk["win_prob_drop"] if isinstance(lk, dict) else lk.win_prob_drop,
+            best_san=lk.get("best_san") if isinstance(lk, dict) else lk.best_san,
+            best_uci=lk.get("best_uci") if isinstance(lk, dict) else lk.best_uci,
+            threat_uci=lk.get("threat_uci") if isinstance(lk, dict) else lk.threat_uci,
+            threat_motif=lk.get("threat_motif") if isinstance(lk, dict) else lk.threat_motif,
+            hung_square=lk.get("hung_square") if isinstance(lk, dict) else lk.hung_square,
+            narration=narration,
+        ))
+
+    plies = [
+        PlyDetail(
+            ply=p["ply"],
+            san=p.get("san"),
+            uci=p.get("uci"),
+            fen_before=p.get("fen_before"),
+            eval_cp_white=p.get("eval_cp_white"),
+            mate_white=p.get("mate_white"),
+            win_prob=p.get("win_prob"),
+            is_user_move=bool(p.get("is_user_move", 0)),
+            clock_centis=p.get("clock_centis"),
+        )
+        for p in ply_rows
+    ]
+
+    return ReviewResponse(game_id=game_id, analysis_status=status, leaks=narrated, plies=plies)
+
+
+@app.delete("/api/games/{game_id}")
+async def delete_game(game_id: int):
+    """Cancel any running analysis and delete the game + its plies/leaks."""
+    review.cancel_analysis(game_id)
+    try:
+        deleted = storage.delete_game(game_id)
+    except Exception as exc:
+        return JSONResponse(status_code=500, content={"detail": str(exc)})
+    if not deleted:
+        return JSONResponse(status_code=404, content={"detail": f"Game {game_id} not found."})
+    return {"deleted": game_id}
+
+
+# ---------------------------------------------------------------------------
+# Profile (additive)
+# ---------------------------------------------------------------------------
+
+@app.get("/api/profile", response_model=ProfileResponse)
+async def get_profile():
+    """Return the cross-game tendency profile for the user."""
+    try:
+        data = profile.build_profile()
+    except RuntimeError:
+        # Storage not initialised (edge case in tests or first boot before init).
+        return ProfileResponse(
+            games_analyzed=0,
+            top_leaks=[],
+            by_phase={"opening": 0, "middlegame": 0, "endgame": 0},
+            by_opening=[],
+            by_color={"white": 0, "black": 0},
+            hope_chess_rate=0.0,
+            trend=[],
+        )
+    return ProfileResponse(**data)
 
 
 # ---------------------------------------------------------------------------

@@ -27,6 +27,7 @@
   <link rel="stylesheet" href="/static/panel.css" />
   <link rel="stylesheet" href="/static/feedback.css" />
   <link rel="stylesheet" href="/static/movelist.css" />
+  <link rel="stylesheet" href="/static/review.css" />
 
   <!-- Lucide icons via esm.sh — replaces HTML-entity glyphs on nav buttons -->
   <script type="module">
@@ -128,6 +129,15 @@
         </div>
       </div>
 
+      <!-- Review replay bar — shown only in review mode -->
+      <div id="review-bar" class="review-bar" hidden>
+        <div class="review-bar-header">
+          <span id="review-game-title" class="review-game-title">Game Review</span>
+          <button id="review-return">Return to my game</button>
+        </div>
+        <div id="review-foresight" class="review-foresight"></div>
+      </div>
+
       <!-- Repertoire practice bar — shown only in rep-practice mode -->
       <div id="rep-bar" class="rep-bar" hidden>
         <div class="rep-header">
@@ -152,6 +162,7 @@
         <button id="tab-btn-opening" role="tab" data-tab="opening" aria-selected="false" aria-controls="tab-opening">Opening</button>
         <button id="tab-btn-traps" role="tab" data-tab="traps" aria-selected="false" aria-controls="tab-traps">Traps</button>
         <button id="tab-btn-repertoire" role="tab" data-tab="repertoire" aria-selected="false" aria-controls="tab-repertoire">Repertoire</button>
+        <button id="tab-btn-review" role="tab" data-tab="review" aria-selected="false" aria-controls="tab-review">Review</button>
       </div>
 
       <!-- Analysis tab -->
@@ -223,6 +234,14 @@
         <div class="empty-state" id="repertoire-empty-state">
           <p>No repertoire loaded yet.</p>
         </div>
+      </div>
+
+      <!-- Review tab -->
+      <div id="tab-review" class="tab-panel" role="tabpanel" aria-labelledby="tab-btn-review">
+        <!-- Profile dashboard -->
+        <div id="review-profile" class="review-profile"></div>
+        <!-- Game library + import — rendered by review.js -->
+        <div id="review-library" class="review-library"></div>
       </div>
     </aside>
   </main>

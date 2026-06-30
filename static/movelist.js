@@ -58,9 +58,10 @@ function render() {
   const mount = byId('move-list');
   if (!mount || !_api) return;
   const state = _api.actions.getState();
-  // Only render in play mode — the list is hidden in setup/trap/rep, and syncBoard()
-  // (which emits position:change) is play-mode only; this avoids any stray replay.
-  if (state.mode && state.mode !== 'play') return;
+  // Render in play mode and review mode. In all other modes (setup/trap/rep)
+  // the movelist is hidden or irrelevant, so early-return.
+  // Refuter resolution #3: broadened from play-only to play|review.
+  if (state.mode && state.mode !== 'play' && state.mode !== 'review') return;
   const moves = state.moves || [];
   const quality = state.moveQuality || [];
   const cursor = state.cursor || 0;
