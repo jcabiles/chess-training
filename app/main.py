@@ -41,9 +41,11 @@ from app.analysis import classify, pov_score_to_white_cp
 from app.engine import AnalysisResult, EngineUnavailable, StockfishEngine
 from app.models import (
     Analysis,
+    AnalyzeAllResponse,
     AnalyzeRequest,
     AnalyzeResponse,
     AnalyzeStatusResponse,
+    CoverageDict,
     GameDetail,
     GameSummary,
     ImportRequest,
@@ -56,7 +58,10 @@ from app.models import (
     OpeningRequest,
     PlyDetail,
     ProfileResponse,
+    RetagRequest,
+    RetagResponse,
     ReviewResponse,
+    SetColorRequest,
     TrapsCheckRequest,
 )
 
@@ -409,7 +414,10 @@ def _game_summary(row: dict) -> GameSummary:
     )
 
 
-# IMPORTANT: /api/games/import is registered BEFORE /api/games/{game_id}.
+# IMPORTANT: all literal /api/games/<word> paths are registered BEFORE
+# /api/games/{game_id} so FastAPI never interprets the literal segment as an
+# integer game_id.  Order: import → retag-color → analyze-all → {game_id}/*.
+
 @app.post("/api/games/import", response_model=ImportResponse)
 async def import_games(req: ImportRequest):
     """Import one or more PGN games from pasted text.
@@ -484,6 +492,48 @@ async def list_games():
     return [_game_summary(r) for r in rows]
 
 
+# IMPORTANT: these two POST literal routes are registered BEFORE
+# /api/games/{game_id} so they are never shadowed by the parameterised route.
+
+@app.post("/api/games/retag-color", response_model=RetagResponse)
+async def retag_color(req: RetagRequest):
+    """Bulk-tag my_color on games whose White/Black name matches any alias.
+
+    Accepts a comma-separated list of usernames in ``username``.  Matching is
+    case-insensitive and trimmed (same logic as import-time inference).  Each
+    matching game has its ``analysis_status`` reset to 'pending' so that the
+    next bulk-analyze pass recomputes leaks under the correct color.
+
+    Returns the number of updated games and fresh coverage counts.
+    """
+    aliases = [a.strip() for a in req.username.split(",") if a.strip()]
+    try:
+        updated = storage.retag_colors_by_aliases(aliases)
+        cov = storage.coverage()
+    except Exception as exc:
+        return JSONResponse(status_code=500, content={"detail": str(exc)})
+    return RetagResponse(
+        updated=updated,
+        coverage=CoverageDict(**cov),
+    )
+
+
+@app.post("/api/games/analyze-all", response_model=AnalyzeAllResponse)
+async def analyze_all_games(engine: StockfishEngine = Depends(get_engine)):
+    """Start a single background task that analyzes all 'pending' games sequentially.
+
+    If a bulk-analyze task is already running, returns immediately (no-op).
+    Returns the count of pending games at the time of the call.
+    """
+    try:
+        pending_count = storage.coverage().get("pending", 0)
+    except Exception:
+        pending_count = 0
+
+    review.start_analyze_all(engine, depth=review.BACKGROUND_DEPTH)
+    return AnalyzeAllResponse(pending=pending_count)
+
+
 @app.get("/api/games/{game_id}", response_model=GameDetail)
 async def get_game(game_id: int):
     """Return a single saved game with per-ply data, or 404 if not found."""
@@ -529,6 +579,28 @@ async def get_game(game_id: int):
         pgn=row.get("pgn", ""),
         plies=plies,
     )
+
+
+@app.patch("/api/games/{game_id}", response_model=GameSummary)
+async def patch_game(game_id: int, req: SetColorRequest):
+    """Set or clear ``my_color`` on a single game.
+
+    Resetting the color invalidates previously computed leaks, so
+    ``analysis_status`` is automatically reset to 'pending'.  Returns the
+    updated game summary, or 404 if the game does not exist.
+    """
+    try:
+        changed = storage.set_my_color(game_id, req.my_color)
+    except ValueError as exc:
+        return JSONResponse(status_code=422, content={"detail": str(exc)})
+    except Exception as exc:
+        return JSONResponse(status_code=500, content={"detail": str(exc)})
+    if not changed:
+        return JSONResponse(status_code=404, content={"detail": f"Game {game_id} not found."})
+    row = storage.get_game(game_id)
+    if row is None:
+        return JSONResponse(status_code=404, content={"detail": f"Game {game_id} not found."})
+    return _game_summary(row)
 
 
 @app.post("/api/games/{game_id}/analyze", response_model=AnalyzeStatusResponse)
@@ -666,6 +738,8 @@ async def get_profile():
         # Storage not initialised (edge case in tests or first boot before init).
         return ProfileResponse(
             games_analyzed=0,
+            games_total=0,
+            games_tagged=0,
             top_leaks=[],
             by_phase={"opening": 0, "middlegame": 0, "endgame": 0},
             by_opening=[],
@@ -673,6 +747,14 @@ async def get_profile():
             hope_chess_rate=0.0,
             trend=[],
         )
+    # Merge coverage counts into the profile payload.
+    try:
+        cov = storage.coverage()
+        data["games_total"] = cov.get("total", 0)
+        data["games_tagged"] = cov.get("tagged", 0)
+    except Exception:
+        data.setdefault("games_total", 0)
+        data.setdefault("games_tagged", 0)
     return ProfileResponse(**data)
 
 

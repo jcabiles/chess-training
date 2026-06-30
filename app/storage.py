@@ -489,3 +489,118 @@ def get_leaks(game_id: int) -> list[dict]:
         "SELECT * FROM leaks WHERE game_id = ? ORDER BY ply", (game_id,)
     ).fetchall()
     return [dict(r) for r in rows]
+
+
+# ---------------------------------------------------------------------------
+# Color-tagging helpers
+# ---------------------------------------------------------------------------
+
+_VALID_COLORS = frozenset({"white", "black"})
+
+
+def set_my_color(game_id: int, color: Optional[str]) -> bool:
+    """Set my_color for a game and reset its analysis_status to 'pending'.
+
+    The reset is required because leaks are computed per-color: changing the
+    color invalidates any previously written leaks.
+
+    Args:
+        game_id: The game to update.
+        color:   'white', 'black', or None (clears the color tag).
+
+    Returns:
+        True if a row was found and updated, False if game_id does not exist.
+
+    Raises:
+        ValueError: if color is not 'white', 'black', or None.
+    """
+    if color is not None and color not in _VALID_COLORS:
+        raise ValueError(f"invalid color: {color!r}; must be 'white', 'black', or None")
+    conn = _get_conn()
+    cur = conn.execute(
+        "UPDATE games SET my_color = ?, analysis_status = 'pending' WHERE id = ?",
+        (color, game_id),
+    )
+    conn.commit()
+    return cur.rowcount > 0
+
+
+def retag_colors_by_aliases(aliases: list[str]) -> int:
+    """Bulk-set my_color on games whose White/Black names match any alias.
+
+    Implements the same case-insensitive trimmed matching as
+    pgn._infer_my_color.  For each matching game, my_color is updated and
+    analysis_status is reset to 'pending' (invalidates stale leaks).
+    Games that do not match any alias are left untouched.
+
+    Args:
+        aliases: List of username strings to match against (e.g. from the
+                 CHESS_USERNAME env var, split on commas).
+
+    Returns:
+        The number of game rows that were actually updated.
+    """
+    if not aliases:
+        return 0
+
+    # Normalise aliases once.
+    normalised = [a.strip().lower() for a in aliases if a.strip()]
+    if not normalised:
+        return 0
+
+    conn = _get_conn()
+    rows = conn.execute("SELECT id, white, black FROM games").fetchall()
+
+    updated = 0
+    for row in rows:
+        game_id = row[0]
+        white = (row[1] or "").strip().lower()
+        black = (row[2] or "").strip().lower()
+
+        my_color: Optional[str] = None
+        for alias in normalised:
+            if alias == white:
+                my_color = "white"
+                break
+            if alias == black:
+                my_color = "black"
+                break
+
+        if my_color is not None:
+            conn.execute(
+                "UPDATE games SET my_color = ?, analysis_status = 'pending' WHERE id = ?",
+                (my_color, game_id),
+            )
+            updated += 1
+
+    if updated:
+        conn.commit()
+    return updated
+
+
+def coverage() -> dict:
+    """Return a dict summarising how many games are tagged / analyzed.
+
+    Keys:
+        total:    Total number of game rows.
+        tagged:   Games with my_color IS NOT NULL.
+        analyzed: Games with analysis_status = 'done'.
+        pending:  Games with analysis_status = 'pending'.
+    """
+    conn = _get_conn()
+    row = conn.execute(
+        """
+        SELECT
+            COUNT(*)                                          AS total,
+            SUM(CASE WHEN my_color IS NOT NULL THEN 1 ELSE 0 END) AS tagged,
+            SUM(CASE WHEN analysis_status = 'done'    THEN 1 ELSE 0 END) AS analyzed,
+            SUM(CASE WHEN analysis_status = 'pending' THEN 1 ELSE 0 END) AS pending
+        FROM games
+        """
+    ).fetchone()
+    return {
+        "total":    row[0] or 0,
+        "tagged":   row[1] or 0,
+        "analyzed": row[2] or 0,
+        "pending":  row[3] or 0,
+    }

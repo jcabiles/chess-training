@@ -316,6 +316,14 @@ class ProfileResponse(BaseModel):
     """Response for ``GET /api/profile``."""
 
     games_analyzed: int
+    games_total: int = Field(
+        default=0,
+        description="Total number of games in the library.",
+    )
+    games_tagged: int = Field(
+        default=0,
+        description="Number of games with my_color set (tagged).",
+    )
     top_leaks: list[dict] = Field(
         default_factory=list,
         description="Top leak categories with count and coach cluster name.",
@@ -325,3 +333,55 @@ class ProfileResponse(BaseModel):
     by_color: dict = Field(default_factory=dict)
     hope_chess_rate: float
     trend: list[dict] = Field(default_factory=list)
+
+
+# ---------------------------------------------------------------------------
+# Color-tagging + bulk-analyze models (additive)
+# ---------------------------------------------------------------------------
+
+
+class SetColorRequest(BaseModel):
+    """Body for ``PATCH /api/games/{game_id}`` — set or clear my_color."""
+
+    my_color: str | None = Field(
+        default=None,
+        description=(
+            "Player color to tag this game with. "
+            "Accepted values: 'white', 'black', or null to clear."
+        ),
+    )
+
+
+class RetagRequest(BaseModel):
+    """Body for ``POST /api/games/retag-color`` — bulk-tag by username aliases."""
+
+    username: str = Field(
+        description=(
+            "Comma-separated list of username aliases to match against White/Black. "
+            "Case-insensitive; trimmed. E.g. 'alice,Alice2'."
+        )
+    )
+
+
+class CoverageDict(BaseModel):
+    """Breakdown of how many games are tagged / analyzed."""
+
+    total: int
+    tagged: int
+    analyzed: int
+    pending: int
+
+
+class RetagResponse(BaseModel):
+    """Response for ``POST /api/games/retag-color``."""
+
+    updated: int = Field(description="Number of games whose my_color was updated.")
+    coverage: CoverageDict = Field(description="Fresh coverage counts after the retag.")
+
+
+class AnalyzeAllResponse(BaseModel):
+    """Response for ``POST /api/games/analyze-all``."""
+
+    pending: int = Field(
+        description="Number of games with analysis_status='pending' at the time the task was started."
+    )

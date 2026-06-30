@@ -604,3 +604,164 @@ class TestExistingRoutesUnbroken:
         r = neutral_client.get("/api/repertoire")
         assert r.status_code == 200
         assert "tree" in r.json()
+
+
+# ---------------------------------------------------------------------------
+# Color-tagging + bulk-analyze route tests
+# ---------------------------------------------------------------------------
+
+
+class TestPatchGameColor:
+    """PATCH /api/games/{game_id} sets my_color and resets status to pending."""
+
+    def _import_one(self, client, my_color=None) -> int:
+        r = client.post("/api/games/import", json={"pgn": _GAME_1_PGN, "my_color": my_color})
+        assert r.status_code == 200
+        return r.json()["games"][0]["id"]
+
+    def test_patch_sets_color_white(self, client):
+        """PATCH sets my_color to 'white'."""
+        game_id = self._import_one(client)
+        r = client.patch(f"/api/games/{game_id}", json={"my_color": "white"})
+        assert r.status_code == 200, r.text
+        body = r.json()
+        assert body["my_color"] == "white"
+        assert body["id"] == game_id
+
+    def test_patch_sets_color_black(self, client):
+        """PATCH sets my_color to 'black'."""
+        game_id = self._import_one(client)
+        r = client.patch(f"/api/games/{game_id}", json={"my_color": "black"})
+        assert r.status_code == 200
+        assert r.json()["my_color"] == "black"
+
+    def test_patch_clears_color(self, client):
+        """PATCH with null clears my_color."""
+        game_id = self._import_one(client, my_color="white")
+        r = client.patch(f"/api/games/{game_id}", json={"my_color": None})
+        assert r.status_code == 200
+        assert r.json()["my_color"] is None
+
+    def test_patch_resets_status_to_pending(self, client):
+        """After PATCH, the game's analysis_status is 'pending'."""
+        game_id = self._import_one(client)
+        # Manually mark done to simulate a previously analyzed game.
+        storage.set_status(game_id, "done")
+
+        r = client.patch(f"/api/games/{game_id}", json={"my_color": "white"})
+        assert r.status_code == 200
+        body = r.json()
+        assert body["analysis_status"] == "pending"
+
+    def test_patch_not_found(self, client):
+        """PATCH on a nonexistent game returns 404."""
+        r = client.patch("/api/games/99999", json={"my_color": "white"})
+        assert r.status_code == 404
+
+    def test_patch_invalid_color_returns_422(self, client):
+        """PATCH with an invalid color value returns 422."""
+        game_id = self._import_one(client)
+        r = client.patch(f"/api/games/{game_id}", json={"my_color": "purple"})
+        assert r.status_code == 422
+
+
+class TestRetagColor:
+    """POST /api/games/retag-color bulk-tags games by username."""
+
+    def test_retag_tags_matching_game(self, client):
+        """Retag returns updated=1 when a username matches a game's White player."""
+        client.post("/api/games/import", json={"pgn": _GAME_1_PGN})  # White=Alice, Black=Bob
+        r = client.post("/api/games/retag-color", json={"username": "Alice"})
+        assert r.status_code == 200, r.text
+        body = r.json()
+        assert body["updated"] == 1
+
+        games = storage.list_games()
+        assert games[0]["my_color"] == "white"
+
+    def test_retag_case_insensitive(self, client):
+        """Retag matches case-insensitively."""
+        client.post("/api/games/import", json={"pgn": _GAME_1_PGN})
+        r = client.post("/api/games/retag-color", json={"username": "alice"})
+        assert r.status_code == 200
+        assert r.json()["updated"] == 1
+
+    def test_retag_no_match_returns_zero(self, client):
+        """When no game matches, updated=0."""
+        client.post("/api/games/import", json={"pgn": _GAME_1_PGN})
+        r = client.post("/api/games/retag-color", json={"username": "UnknownPlayer"})
+        assert r.status_code == 200
+        assert r.json()["updated"] == 0
+
+    def test_retag_returns_coverage(self, client):
+        """Retag response includes a coverage dict with total/tagged/analyzed/pending."""
+        client.post("/api/games/import", json={"pgn": _GAME_1_PGN})
+        r = client.post("/api/games/retag-color", json={"username": "Alice"})
+        assert r.status_code == 200
+        cov = r.json()["coverage"]
+        assert "total" in cov
+        assert "tagged" in cov
+        assert "analyzed" in cov
+        assert "pending" in cov
+        assert cov["tagged"] >= 1
+
+    def test_retag_with_comma_separated_aliases(self, client):
+        """Multiple aliases separated by commas all match."""
+        client.post("/api/games/import", json={"pgn": _GAME_1_PGN})   # White=Alice
+        client.post("/api/games/import", json={"pgn": _GAME_2_PGN})   # White=Charlie
+        r = client.post("/api/games/retag-color", json={"username": "Alice,Charlie"})
+        assert r.status_code == 200
+        assert r.json()["updated"] == 2
+
+    def test_retag_route_not_shadowed_by_game_id(self, client):
+        """POST /api/games/retag-color is NOT treated as /api/games/{game_id}."""
+        # This would 422 if routed to {game_id} (can't parse 'retag-color' as int).
+        r = client.post("/api/games/retag-color", json={"username": "Alice"})
+        # Must reach the retag route, not a 422 from int coercion.
+        assert r.status_code == 200
+        assert "updated" in r.json()
+
+
+class TestAnalyzeAll:
+    """POST /api/games/analyze-all starts a bulk analysis task."""
+
+    def test_analyze_all_returns_pending_count(self, client):
+        """analyze-all returns the count of pending games."""
+        client.post("/api/games/import", json={"pgn": _GAME_1_PGN})
+        client.post("/api/games/import", json={"pgn": _GAME_2_PGN})
+        r = client.post("/api/games/analyze-all")
+        assert r.status_code == 200, r.text
+        body = r.json()
+        assert "pending" in body
+        assert body["pending"] >= 1
+
+    def test_analyze_all_route_not_shadowed(self, client):
+        """POST /api/games/analyze-all is NOT treated as /api/games/{game_id}."""
+        r = client.post("/api/games/analyze-all")
+        # If shadowed, FastAPI would 422 (can't parse 'analyze-all' as int).
+        assert r.status_code == 200
+        assert "pending" in r.json()
+
+
+class TestProfileCoverage:
+    """GET /api/profile includes games_total and games_tagged."""
+
+    def test_profile_includes_coverage_fields(self, client):
+        """Profile response has games_total and games_tagged fields."""
+        r = client.get("/api/profile")
+        assert r.status_code == 200
+        body = r.json()
+        assert "games_total" in body
+        assert "games_tagged" in body
+
+    def test_profile_coverage_reflects_db(self, client):
+        """After importing and tagging, games_total and games_tagged update."""
+        # Import two games, tag one.
+        client.post("/api/games/import", json={"pgn": _GAME_1_PGN, "my_color": "white"})
+        client.post("/api/games/import", json={"pgn": _GAME_2_PGN})
+
+        r = client.get("/api/profile")
+        assert r.status_code == 200
+        body = r.json()
+        assert body["games_total"] == 2
+        assert body["games_tagged"] == 1

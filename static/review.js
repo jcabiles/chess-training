@@ -14,6 +14,7 @@ const byId = (id) => document.getElementById(id);
 let _api = null;
 let _reviewData = null;  // ReviewResponse from GET /api/games/{id}/review (leaks + plies)
 let _openedGameId = null;
+let _analyzeAllInterval = null;  // polling interval for analyze-all progress
 
 // ---------------------------------------------------------------------------
 // Utility
@@ -58,6 +59,16 @@ async function postJSON(url, body) {
   return res.json();
 }
 
+async function patchJSON(url, body) {
+  const res = await fetch(url, {
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(body),
+  });
+  if (!res.ok) throw new Error(`HTTP ${res.status}: ${url}`);
+  return res.json();
+}
+
 async function deleteGame(id) {
   const res = await fetch(`/api/games/${id}`, { method: 'DELETE' });
   if (!res.ok) throw new Error(`HTTP ${res.status}: DELETE /api/games/${id}`);
@@ -83,7 +94,109 @@ function statusLabel(status) {
   return labels[status] || status;
 }
 
-function renderLibrary(games) {
+function renderCoverageHint(games, profile) {
+  const total = profile ? profile.games_total : (games ? games.length : 0);
+  const tagged = profile ? profile.games_tagged : (games ? games.filter((g) => g.my_color).length : 0);
+  const analyzed = profile ? profile.games_analyzed : 0;
+
+  const wrap = el('div', { className: 'review-coverage' });
+
+  const hint = el('div', { className: 'review-coverage-line' });
+  hint.appendChild(el('span', {
+    className: 'review-coverage-stat',
+    textContent: `${tagged} of ${total} games tagged`,
+  }));
+  hint.appendChild(el('span', { className: 'review-coverage-sep', textContent: '·' }));
+  hint.appendChild(el('span', {
+    className: 'review-coverage-stat',
+    textContent: `${analyzed} analyzed`,
+  }));
+  wrap.appendChild(hint);
+
+  // Nudge when many games are untagged and total > 0.
+  const untagged = total - tagged;
+  if (total > 0 && untagged > 0) {
+    const nudge = el('div', { className: 'review-coverage-nudge' });
+    nudge.textContent =
+      `${untagged} game${untagged !== 1 ? 's' : ''} have no color tag — ` +
+      'the profile only counts tagged games. Use "Set my color from username" below to tag them in bulk.';
+    wrap.appendChild(nudge);
+  }
+
+  return wrap;
+}
+
+function renderBulkControls() {
+  const wrap = el('div', { className: 'review-bulk' });
+
+  // --- "Set my color from username" ---
+  const retagSection = el('div', { className: 'review-bulk-section' });
+  retagSection.appendChild(el('div', { className: 'review-import-title', textContent: 'Set my color from username' }));
+
+  const retagRow = el('div', { className: 'review-bulk-row' });
+  const retagInput = el('input', {
+    type: 'text',
+    className: 'review-bulk-input',
+    placeholder: 'username (or alias1,alias2)',
+  });
+  retagInput.setAttribute('aria-label', 'Chess username for bulk color tagging');
+  const retagBtn = el('button', { className: 'review-btn review-btn-primary', textContent: 'Tag games' });
+  retagRow.append(retagInput, retagBtn);
+
+  const retagStatus = el('div', { className: 'review-import-status' });
+
+  retagBtn.addEventListener('click', async () => {
+    const username = retagInput.value.trim();
+    if (!username) {
+      retagStatus.textContent = 'Enter a username first.';
+      retagStatus.className = 'review-import-status error';
+      return;
+    }
+    retagBtn.disabled = true;
+    retagStatus.textContent = 'Tagging…';
+    retagStatus.className = 'review-import-status';
+    try {
+      const data = await postJSON('/api/games/retag-color', { username });
+      retagStatus.textContent = `${data.updated} game${data.updated !== 1 ? 's' : ''} tagged.`;
+      retagStatus.className = 'review-import-status success';
+      showToast(`${data.updated} games tagged.`);
+      await refreshLibraryAndProfile();
+    } catch (err) {
+      retagStatus.textContent = `Failed: ${err.message}`;
+      retagStatus.className = 'review-import-status error';
+    } finally {
+      retagBtn.disabled = false;
+    }
+  });
+
+  retagSection.append(retagRow, retagStatus);
+
+  // --- "Analyze all" ---
+  const analyzeSection = el('div', { className: 'review-bulk-section' });
+  analyzeSection.appendChild(el('div', { className: 'review-import-title', textContent: 'Bulk analyze' }));
+
+  const analyzeRow = el('div', { className: 'review-bulk-row' });
+  const analyzeAllBtn = el('button', { className: 'review-btn review-btn-primary', textContent: 'Analyze all pending' });
+  analyzeRow.appendChild(analyzeAllBtn);
+
+  const analyzeProgress = el('span', { className: 'review-bulk-progress' });
+  analyzeRow.appendChild(analyzeProgress);
+
+  analyzeAllBtn.addEventListener('click', () => triggerAnalyzeAll(analyzeAllBtn, analyzeProgress));
+
+  // If a poll is already running (re-render mid-flight), disable the button
+  if (_analyzeAllInterval !== null) {
+    analyzeAllBtn.disabled = true;
+    analyzeProgress.textContent = 'Analyzing…';
+  }
+
+  analyzeSection.appendChild(analyzeRow);
+
+  wrap.append(retagSection, analyzeSection);
+  return wrap;
+}
+
+function renderLibrary(games, profile) {
   const host = byId('review-library');
   if (!host) return;
   host.replaceChildren();
@@ -92,6 +205,12 @@ function renderLibrary(games) {
   const hdr = el('div', { className: 'review-section-hdr' });
   hdr.appendChild(el('span', { className: 'review-section-title', textContent: 'Game Library' }));
   host.appendChild(hdr);
+
+  // Coverage hint
+  host.appendChild(renderCoverageHint(games, profile));
+
+  // Bulk controls (retag + analyze-all)
+  host.appendChild(renderBulkControls());
 
   // Import controls
   host.appendChild(renderImportControls());
@@ -130,6 +249,42 @@ function renderLibrary(games) {
     }
     meta.appendChild(el('span', { className: `review-status review-status-${game.analysis_status}`, textContent: statusLabel(game.analysis_status) }));
 
+    // Per-game color control
+    const colorRow = el('div', { className: 'review-game-color-row' });
+    const colorLabel = el('span', { className: 'review-game-color-label', textContent: 'My color:' });
+    const colorSel = el('select', { className: 'review-color-select review-color-select-sm' });
+    colorSel.setAttribute('aria-label', 'Set my color for this game');
+    [
+      { value: '', text: '— unknown' },
+      { value: 'white', text: 'White' },
+      { value: 'black', text: 'Black' },
+    ].forEach(({ value, text }) => {
+      const opt = document.createElement('option');
+      opt.value = value;
+      opt.textContent = text;
+      if ((game.my_color || '') === value) opt.selected = true;
+      colorSel.appendChild(opt);
+    });
+
+    const colorStatus = el('span', { className: 'review-game-color-status' });
+
+    colorSel.addEventListener('change', async () => {
+      const newColor = colorSel.value || null;
+      colorStatus.textContent = 'Saving…';
+      colorStatus.className = 'review-game-color-status';
+      try {
+        await patchJSON(`/api/games/${game.id}`, { my_color: newColor });
+        colorStatus.textContent = 'Saved — pending re-analysis';
+        colorStatus.className = 'review-game-color-status review-game-color-status-ok';
+        await refreshLibraryAndProfile();
+      } catch (err) {
+        colorStatus.textContent = `Failed: ${err.message}`;
+        colorStatus.className = 'review-game-color-status review-game-color-status-err';
+      }
+    });
+
+    colorRow.append(colorLabel, colorSel, colorStatus);
+
     // Actions
     const actions = el('div', { className: 'review-game-actions' });
 
@@ -151,7 +306,7 @@ function renderLibrary(games) {
     // Status (live polling placeholder)
     const statusEl = el('span', { className: 'review-game-status-live' });
 
-    row.append(players, meta, actions, statusEl);
+    row.append(players, meta, colorRow, actions, statusEl);
     listWrap.appendChild(row);
   }
 
@@ -260,6 +415,61 @@ function pollStatus(gameId, btn, statusEl) {
       if (btn) btn.disabled = false;
     }
   }, 1000);
+}
+
+async function triggerAnalyzeAll(btn, progressEl) {
+  if (_analyzeAllInterval !== null) return; // already running
+  btn.disabled = true;
+  if (progressEl) progressEl.textContent = 'Starting…';
+  try {
+    const data = await postJSON('/api/games/analyze-all', {});
+    const initialPending = data.pending;
+    if (initialPending === 0) {
+      if (progressEl) progressEl.textContent = 'No pending games.';
+      btn.disabled = false;
+      return;
+    }
+    if (progressEl) progressEl.textContent = `Analyzing… ${initialPending} pending`;
+
+    // Poll /api/profile every ~1.5s for updated pending count.
+    _analyzeAllInterval = setInterval(async () => {
+      try {
+        const profile = await fetchJSON('/api/profile');
+        const games = await fetchJSON('/api/games').catch(() => []);
+        const pending = games.filter((g) => g.analysis_status === 'pending' || g.analysis_status === 'analyzing').length;
+        if (progressEl) {
+          progressEl.textContent = pending > 0 ? `Analyzing… ${pending} pending` : 'Done.';
+        }
+        renderLibrary(games, profile);
+        renderProfile(profile);
+        if (pending === 0) {
+          clearInterval(_analyzeAllInterval);
+          _analyzeAllInterval = null;
+          btn.disabled = false;
+          showToast('All games analyzed.');
+          // Final full refresh to ensure consistent state.
+          await refreshLibraryAndProfile();
+        }
+      } catch (_) {
+        // Network blip — keep polling, do not stop.
+      }
+    }, 1500);
+  } catch (err) {
+    if (progressEl) progressEl.textContent = `Failed: ${err.message}`;
+    btn.disabled = false;
+  }
+}
+
+function showToast(message) {
+  const container = byId('toasts');
+  if (!container) return;
+  const toast = el('div', { className: 'review-toast', textContent: message });
+  container.appendChild(toast);
+  // Auto-remove after 3.5s.
+  setTimeout(() => {
+    toast.classList.add('review-toast-fade');
+    setTimeout(() => toast.remove(), 400);
+  }, 3100);
 }
 
 async function deleteAndRefresh(gameId) {
@@ -437,11 +647,11 @@ async function refreshLibraryAndProfile() {
       fetchJSON('/api/games').catch(() => []),
       fetchJSON('/api/profile').catch(() => null),
     ]);
-    renderLibrary(games);
+    renderLibrary(games, profile);
     renderProfile(profile);
   } catch (_) {
     // Degraded — render empty states.
-    renderLibrary([]);
+    renderLibrary([], null);
     renderProfile(null);
   }
 }
@@ -452,7 +662,20 @@ function renderProfile(profile) {
   host.replaceChildren();
 
   if (!profile || profile.games_analyzed === 0) {
-    host.appendChild(el('div', { className: 'review-profile-empty', textContent: 'No analyzed games yet. Import and analyze some games to see your coaching profile.' }));
+    const emptyWrap = el('div', { className: 'review-profile-wrap' });
+    // Show coverage header even when no analysis yet (so user knows what to do).
+    emptyWrap.appendChild(el('div', { className: 'review-section-hdr' }, [
+      el('span', { className: 'review-section-title', textContent: 'Your Coaching Profile' }),
+    ]));
+    if (profile && profile.games_total > 0) {
+      const statsRow = el('div', { className: 'review-stats-row' });
+      statsRow.appendChild(reviewStat('Total Games', profile.games_total));
+      statsRow.appendChild(reviewStat('Tagged', profile.games_tagged));
+      statsRow.appendChild(reviewStat('Analyzed', profile.games_analyzed));
+      emptyWrap.appendChild(statsRow);
+    }
+    emptyWrap.appendChild(el('div', { className: 'review-profile-empty', textContent: 'No analyzed games yet. Import and analyze some games to see your coaching profile.' }));
+    host.appendChild(emptyWrap);
     return;
   }
 
@@ -463,8 +686,12 @@ function renderProfile(profile) {
     el('span', { className: 'review-section-title', textContent: 'Your Coaching Profile' }),
   ]));
 
-  // Stats row: games analyzed + hope-chess rate.
+  // Stats row: total / tagged / analyzed + hope-chess rate.
   const statsRow = el('div', { className: 'review-stats-row' });
+  if (profile.games_total > 0) {
+    statsRow.appendChild(reviewStat('Total Games', profile.games_total));
+    statsRow.appendChild(reviewStat('Tagged', profile.games_tagged));
+  }
   statsRow.appendChild(reviewStat('Games Analyzed', profile.games_analyzed));
   const hopeRate = typeof profile.hope_chess_rate === 'number'
     ? Math.round(profile.hope_chess_rate * 100) + '%'
