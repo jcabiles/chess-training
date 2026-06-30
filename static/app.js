@@ -71,6 +71,10 @@ let rep = null;            // active rep-practice session (see startRepPractice)
 let repSnapshot = null;    // saved play game captured when entering rep-practice
 let repEngineToken = 0;    // guards stale async engine-opponent replies (take-back/restart/exit)
 let reviewSnapshot = null; // saved play state captured when entering review mode (transient)
+// Analysis request coalescing — prevents pile-ups during rapid undo/redo/move-list navigation.
+let analysisInFlight = false; // true while a refreshAnalysis fetch is in progress
+let analysisPending = false;  // true if another refresh was requested while in-flight
+let analysisToken = 0;        // monotonic counter; stale responses are dropped
 
 const byId = (id) => document.getElementById(id);
 
@@ -319,11 +323,24 @@ async function postJSON(url, body) {
 }
 
 async function refreshAnalysis() {
+  // Coalesce rapid calls (undo/redo/move-list clicks): if a fetch is already
+  // in progress, mark that another is wanted and return immediately. The
+  // finally block below will re-invoke once the current request settles,
+  // picking up whatever position the user ended up at — so the final position
+  // always gets analyzed, never silently dropped.
+  if (analysisInFlight) {
+    analysisPending = true;
+    return;
+  }
+  analysisInFlight = true;
+  const myToken = ++analysisToken;
+
   emit('analysis:start');
   setStatus('Analyzing…');
   try {
     if (state.cursor === 0) {
       const data = await postJSON('/api/analyze', { fen: state.baseFen });
+      if (myToken !== analysisToken) { emit('analysis:end'); return; } // stale — drop
       renderAnalysis(data.analysis);
     } else {
       const before = positionAt(state.cursor - 1);
@@ -332,13 +349,25 @@ async function refreshAnalysis() {
         move: state.moves[state.cursor - 1],
         useBook: true,
       });
+      if (myToken !== analysisToken) { emit('analysis:end'); return; } // stale — drop
       applyMoveResponse(data);
     }
     setStatus('');
     emit('analysis:end');
   } catch (err) {
     emit('analysis:end');
-    setStatus(err.message, true);
+    // Non-OK / 503 / network failure: show a clear recovery prompt and stop.
+    // Do NOT auto-retry — the user must restart the engine explicitly.
+    if (myToken !== analysisToken) return; // stale error from a superseded request
+    setStatus('Engine stopped responding — click Restart engine', true);
+  } finally {
+    analysisInFlight = false;
+    if (analysisPending) {
+      analysisPending = false;
+      // Re-read current state fresh so we analyze wherever the user ended up,
+      // not a position captured at call time.
+      refreshAnalysis();
+    }
   }
 }
 
@@ -1970,6 +1999,30 @@ function init() {
   byId('reset').addEventListener('click', reset);
   byId('load-fen').addEventListener('click', loadFen);
   byId('fen-input').addEventListener('keydown', (e) => { if (e.key === 'Enter') loadFen(); });
+
+  // Engine restart button: POSTs to /api/engine/restart, then re-analyzes the
+  // current position. Game/board state is untouched — only the engine process
+  // restarts. Guards for the element existing so older HTML stays compatible.
+  const engineRestartBtn = byId('engine-restart-btn');
+  if (engineRestartBtn) {
+    engineRestartBtn.addEventListener('click', async () => {
+      engineRestartBtn.disabled = true;
+      engineRestartBtn.classList.add('is-busy');
+      setStatus('Restarting engine…');
+      try {
+        const res = await fetch('/api/engine/restart', { method: 'POST' });
+        if (!res.ok) throw new Error(`Restart failed (${res.status})`);
+        emit('toast:show', 'Engine restarted');
+        setStatus('');
+        refreshAnalysis(); // re-analyze current position (game is untouched)
+      } catch (err) {
+        setStatus(`Restart failed — ${err.message}`, true);
+      } finally {
+        engineRestartBtn.disabled = false;
+        engineRestartBtn.classList.remove('is-busy');
+      }
+    });
+  }
 
   // Setup controls
   byId('setup-toggle').addEventListener('click', enterSetup);

@@ -385,3 +385,21 @@ class AnalyzeAllResponse(BaseModel):
     pending: int = Field(
         description="Number of games with analysis_status='pending' at the time the task was started."
     )
+
+
+# ---------------------------------------------------------------------------
+# Engine control models (additive)
+# ---------------------------------------------------------------------------
+
+
+class EngineStatusResponse(BaseModel):
+    """Response for ``GET /api/engine/status``."""
+
+    running: bool = Field(description="Whether the Stockfish subprocess is currently running.")
+
+
+class EngineRestartResponse(BaseModel):
+    """Response for ``POST /api/engine/restart``."""
+
+    restarted: bool = Field(description="Whether the engine restart was attempted (always True).")
+    running: bool = Field(description="Whether the Stockfish subprocess is running after the restart.")

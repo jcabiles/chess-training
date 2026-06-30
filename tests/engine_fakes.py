@@ -119,6 +119,9 @@ class ScriptedEngine:
     def close(self) -> None:
         pass
 
+    async def restart(self) -> None:
+        """No-op restart: ScriptedEngine has no subprocess to kill."""
+
     # -- analysis -----------------------------------------------------------
 
     async def analyze(

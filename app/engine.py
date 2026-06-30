@@ -34,6 +34,7 @@ from __future__ import annotations
 import asyncio
 import os
 import shutil
+import signal
 from dataclasses import dataclass, field
 from typing import List, Optional
 
@@ -57,6 +58,15 @@ DEFAULT_DEPTH: int = 18
 
 #: Environment variable that, if set, points at the Stockfish binary.
 STOCKFISH_PATH_ENV: str = "STOCKFISH_PATH"
+
+#: Soft time cap (seconds) passed to Stockfish for interactive (per-move) analyses.
+#: Overridable via ENGINE_SOFT_TIME env var. Must be < ENGINE_HARD_TIMEOUT_S.
+INTERACTIVE_SOFT_TIME_S: float = float(os.environ.get("ENGINE_SOFT_TIME", "3.0"))
+
+#: Hard per-call asyncio watchdog (seconds). If the executor thread has not returned
+#: by this deadline, the engine is poisoned and EngineUnavailable is raised.
+#: Overridable via ENGINE_HARD_TIMEOUT env var. Must be > INTERACTIVE_SOFT_TIME_S.
+ENGINE_HARD_TIMEOUT_S: float = float(os.environ.get("ENGINE_HARD_TIMEOUT", "8.0"))
 
 
 class EngineUnavailable(RuntimeError):
@@ -151,6 +161,10 @@ class StockfishEngine:
         self._threads = threads
         self._hash_mb = hash_mb
         self._engine: Optional[chess_engine.SimpleEngine] = None
+        # OS pid of the Stockfish subprocess, captured in start(). Used by
+        # _poison() to SIGKILL the process without relying on a possibly-hung
+        # engine.close() call.
+        self._pid: Optional[int] = None
         # Serializes ALL engine access. SimpleEngine is not thread-safe and the
         # executor is concurrent, so only one analysis may be in flight at once.
         self._lock = asyncio.Lock()
@@ -195,6 +209,27 @@ class StockfishEngine:
                 f"Failed to configure Stockfish: {exc}"
             ) from exc
 
+        # Capture the OS pid so _poison() can SIGKILL without blocking.
+        # engine.transport is asyncio.SubprocessTransport (public attribute,
+        # confirmed in python-chess SimpleEngine.__init__); get_pid() is part
+        # of asyncio.SubprocessTransport's documented interface.
+        pid: Optional[int] = None
+        try:
+            pid = engine.transport.get_pid()
+        except Exception:
+            # Fall back through known private attribute chains; if none work,
+            # _pid stays None and _poison() degrades to fire-and-forget close().
+            try:
+                pid = getattr(engine, "_transport", None) and engine._transport.get_pid()
+            except Exception:
+                pass
+            if not pid:
+                try:
+                    pid = engine._process.pid  # type: ignore[attr-defined]
+                except Exception:
+                    pid = None
+
+        self._pid = pid
         self._engine = engine
 
     def close(self) -> None:
@@ -211,7 +246,133 @@ class StockfishEngine:
                 # Best-effort shutdown; the process is being torn down anyway.
                 pass
 
+    # -- poison / restart ---------------------------------------------------
+
+    def _poison(self, engine: Optional[chess_engine.SimpleEngine]) -> None:
+        """Force-terminate *engine* and null the handle. SYNC, never awaits.
+
+        Called from both ``_run_analyse`` exception handlers and ``restart()``.
+        Must never raise. Strategy:
+
+        1. Null ``self._engine`` and ``self._pid`` immediately so no later caller
+           can reuse the poisoned handle.
+        2. KILL FIRST — send SIGKILL to the subprocess pid without waiting.
+           ``engine.close()``/``quit()`` call ``process.wait()`` internally which
+           can block indefinitely if the Stockfish thread is hung; we must not call
+           them inline.
+        3. Schedule a fire-and-forget ``engine.close()`` in an executor as residual
+           cleanup. We do NOT await it — if it hangs, the loop is unaffected.
+        """
+        if engine is None:
+            return
+
+        # Capture pid before nulling (self._pid may already differ if racing).
+        pid = self._pid
+
+        # Null handles immediately — correctness: next call gets a fresh engine.
+        self._engine = None
+        self._pid = None
+
+        # KILL FIRST — instant, non-blocking.
+        if pid is not None:
+            try:
+                os.kill(pid, getattr(signal, "SIGKILL", signal.SIGTERM))
+            except Exception:
+                pass  # process may already be dead; ignore
+
+        # Fire-and-forget residual cleanup — do NOT await.
+        try:
+            loop = asyncio.get_running_loop()
+            loop.run_in_executor(None, engine.close)
+        except Exception:
+            pass  # best-effort; if we can't schedule, just drop it
+
+    async def restart(self) -> None:
+        """Force-restart the engine (lock-free, idempotent).
+
+        Poisons (kills + nulls) the current engine process without acquiring the
+        lock — intentional, since the lock may be held by a wedged call. Leaves
+        ``self._engine = None`` so the next ``analyze*()`` lazily starts a fresh
+        process. Safe to call if the engine was never started.
+        """
+        self._poison(self._engine)
+
     # -- analysis -----------------------------------------------------------
+
+    async def _run_analyse(
+        self,
+        board: chess.Board,
+        limit: chess_engine.Limit,
+        multipv: int = 1,
+    ) -> List[chess_engine.InfoDict]:
+        """Internal: run engine.analyse under the lock + hard-timeout watchdog.
+
+        Both public methods delegate here. Serializes via ``self._lock``, lazily
+        starts the engine, shields the executor future from cancellation, and
+        applies the hard-timeout watchdog (``ENGINE_HARD_TIMEOUT_S``).
+
+        Returns:
+            A list of ``InfoDict`` (always a list; normalized from a bare dict when
+            ``multipv`` is effectively 1 and python-chess returns a dict).
+
+        Raises:
+            EngineUnavailable: on timeout, EngineError, or EngineTerminatedError.
+            asyncio.CancelledError: re-raised immediately after poisoning so the
+                caller's task can honor its cancellation.
+        """
+        async with self._lock:
+            if self._engine is None:
+                self.start()
+            # Capture a LOCAL reference to the engine. _call must close over this
+            # local — NOT self._engine — so that _poison() nulling self._engine
+            # does not cause an AttributeError in the still-running executor thread.
+            engine = self._engine
+            assert engine is not None  # start() guarantees this or raised
+
+            loop = asyncio.get_running_loop()
+
+            def _call() -> List[chess_engine.InfoDict]:
+                result = engine.analyse(board, limit, multipv=multipv)
+                # Normalize: always return a list (multipv=None/1 may return dict).
+                if isinstance(result, list):
+                    return result
+                return [result]
+
+            fut = loop.run_in_executor(None, _call)
+
+            try:
+                # shield: a client-disconnect CancelledError does NOT cancel the
+                #   executor future (the thread keeps running to completion).
+                # wait_for: hard watchdog — raises TimeoutError after the deadline
+                #   regardless of shield; the shielded fut keeps running but we
+                #   poison the engine and stop waiting.
+                info = await asyncio.wait_for(
+                    asyncio.shield(fut), timeout=ENGINE_HARD_TIMEOUT_S
+                )
+            except asyncio.CancelledError:
+                # Re-raise immediately — swallowing CancelledError wedges the task.
+                # Poison first so the next caller gets a clean engine.
+                self._poison(engine)
+                raise
+            except asyncio.TimeoutError:
+                self._poison(engine)
+                raise EngineUnavailable(
+                    "Stockfish timed out; engine restarted"
+                )
+            except chess_engine.EngineTerminatedError as exc:
+                # Process died on its own; null so the next call relaunches.
+                self._engine = None
+                raise EngineUnavailable(
+                    f"Stockfish process terminated unexpectedly: {exc}"
+                ) from exc
+            except chess_engine.EngineError as exc:
+                # Corrupted-but-alive handle — must poison, not just raise.
+                self._poison(engine)
+                raise EngineUnavailable(
+                    f"Stockfish analysis failed: {exc}"
+                ) from exc
+
+        return info
 
     async def analyze_multi(
         self,
@@ -222,8 +383,9 @@ class StockfishEngine:
         """Analyze a position to a fixed depth, returning up to *multipv* ranked lines.
 
         Uses the SAME single ``asyncio.Lock`` + ``run_in_executor`` pattern as
-        :meth:`analyze`.  When ``multipv=1`` the list has exactly one element and
-        its score / PV match what :meth:`analyze` returns.
+        :meth:`analyze` (both delegate to :meth:`_run_analyse`). When ``multipv=1``
+        the list has exactly one element and its score / PV match what
+        :meth:`analyze` returns.
 
         Args:
             fen: The position to analyze, in Forsyth-Edwards Notation.
@@ -244,36 +406,10 @@ class StockfishEngine:
         except ValueError as exc:
             raise ValueError(f"Invalid FEN: {fen!r} ({exc})") from exc
 
-        async with self._lock:
-            if self._engine is None:
-                self.start()
-            engine = self._engine
-            assert engine is not None
-
-            loop = asyncio.get_running_loop()
-
-            def _run_multi() -> List[chess_engine.InfoDict]:
-                # engine.analyse returns List[InfoDict] when multipv is an int,
-                # ranked best-first by python-chess.
-                result = engine.analyse(
-                    board,
-                    chess_engine.Limit(depth=depth),
-                    multipv=multipv,
-                )
-                # Normalise: always return a list (multipv=None returns a bare dict).
-                if isinstance(result, list):
-                    return result
-                return [result]
-
-            try:
-                infos = await loop.run_in_executor(None, _run_multi)
-            except chess_engine.EngineError as exc:
-                raise EngineUnavailable(f"Stockfish analysis failed: {exc}") from exc
-            except chess_engine.EngineTerminatedError as exc:
-                self._engine = None
-                raise EngineUnavailable(
-                    f"Stockfish process terminated unexpectedly: {exc}"
-                ) from exc
+        # Background reviews use depth-only limit (no soft time cap).
+        infos = await self._run_analyse(
+            board, chess_engine.Limit(depth=depth), multipv=multipv
+        )
 
         # --- post-processing (outside the lock; pure, no engine access) ---
 
@@ -308,11 +444,14 @@ class StockfishEngine:
         Lazily starts the engine if needed, then runs the BLOCKING
         ``engine.analyse(...)`` in a thread-pool executor while holding the
         module's ``asyncio.Lock`` so no two analyses overlap (SimpleEngine is not
-        thread-safe).
+        thread-safe). A soft time cap (``INTERACTIVE_SOFT_TIME_S``) is passed to
+        Stockfish; a hard asyncio watchdog (``ENGINE_HARD_TIMEOUT_S``) guards
+        against a totally hung process.
 
         Args:
             fen: The position to analyze, in Forsyth-Edwards Notation.
-            depth: Fixed search depth (NOT a time cap). Defaults to ``DEFAULT_DEPTH``.
+            depth: Fixed search depth (target; may not be reached if the soft time
+                cap fires first). Defaults to ``DEFAULT_DEPTH``.
 
         Returns:
             An :class:`AnalysisResult` with the raw ``PovScore`` and the PV (as
@@ -329,31 +468,13 @@ class StockfishEngine:
         except ValueError as exc:
             raise ValueError(f"Invalid FEN: {fen!r} ({exc})") from exc
 
-        # Serialize: at most one analysis in flight. We also lazily start under
-        # the lock so concurrent first-callers don't race to launch two processes.
-        async with self._lock:
-            if self._engine is None:
-                self.start()
-            engine = self._engine
-            assert engine is not None  # start() guarantees this or raised
-
-            loop = asyncio.get_running_loop()
-
-            def _run_analysis() -> chess_engine.InfoDict:
-                # Runs in a worker thread. Only reached while the lock is held,
-                # so it is the sole concurrent user of `engine`.
-                return engine.analyse(board, chess_engine.Limit(depth=depth))
-
-            try:
-                info = await loop.run_in_executor(None, _run_analysis)
-            except chess_engine.EngineError as exc:
-                raise EngineUnavailable(f"Stockfish analysis failed: {exc}") from exc
-            except chess_engine.EngineTerminatedError as exc:
-                # Process died; drop the dead handle so a later call can relaunch.
-                self._engine = None
-                raise EngineUnavailable(
-                    f"Stockfish process terminated unexpectedly: {exc}"
-                ) from exc
+        # Interactive searches get a soft time cap so sharp positions don't stall
+        # the UI; depth is still passed so Stockfish stops at depth if reached first.
+        infos = await self._run_analyse(
+            board,
+            chess_engine.Limit(depth=depth, time=INTERACTIVE_SOFT_TIME_S),
+        )
+        info = infos[0]
 
         # --- post-processing (outside the lock; pure, no engine access) ---
 

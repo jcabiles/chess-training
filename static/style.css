@@ -714,6 +714,42 @@ body.trap-practice-mode #fen-error { display: none; }
 }
 
 /* ============================================================
+   Engine restart button (Analysis tab)
+   ============================================================ */
+
+.engine-restart-btn {
+  font-size: 0.8rem;
+  padding: var(--space-2) var(--space-3);
+  background: transparent;
+  border-color: var(--border-subtle);
+  color: var(--text-secondary);
+  margin: var(--space-2) 0;
+  transition:
+    border-color var(--motion-fast) var(--ease-out),
+    color var(--motion-fast) var(--ease-out);
+}
+
+.engine-restart-btn:hover {
+  border-color: var(--accent);
+  color: var(--text);
+}
+
+.engine-restart-btn:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 1px;
+}
+
+.engine-restart-btn:disabled {
+  opacity: 0.6;
+  cursor: default;
+}
+
+.engine-restart-btn.is-busy {
+  opacity: 0.8;
+  font-style: italic;
+}
+
+/* ============================================================
    Trap bar (drill study bar — stays in board column)
    ============================================================ */
 

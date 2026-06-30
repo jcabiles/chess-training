@@ -46,6 +46,8 @@ from app.models import (
     AnalyzeResponse,
     AnalyzeStatusResponse,
     CoverageDict,
+    EngineRestartResponse,
+    EngineStatusResponse,
     GameDetail,
     GameSummary,
     ImportRequest,
@@ -321,6 +323,27 @@ async def make_move(req: MoveRequest, engine: StockfishEngine = Depends(get_engi
         lastMoveSan=last_move_san,
         analysis=_build_analysis(after, quality=quality),
     )
+
+
+# ---------------------------------------------------------------------------
+# Engine control routes
+# ---------------------------------------------------------------------------
+@app.get("/api/engine/status", response_model=EngineStatusResponse)
+async def engine_status(engine: StockfishEngine = Depends(get_engine)):
+    """Return the current status of the Stockfish engine."""
+    return EngineStatusResponse(running=engine.is_running)
+
+
+@app.post("/api/engine/restart", response_model=EngineRestartResponse)
+async def restart_engine(engine: StockfishEngine = Depends(get_engine)):
+    """Force-restart the Stockfish engine.
+
+    Terminates the current engine subprocess (if any) and schedules a fresh
+    start for the next analysis request. Does not require the engine to be
+    healthy; safe to call when wedged. Always returns status 200 with restarted=True.
+    """
+    await engine.restart()
+    return EngineRestartResponse(restarted=True, running=engine.is_running)
 
 
 # ---------------------------------------------------------------------------

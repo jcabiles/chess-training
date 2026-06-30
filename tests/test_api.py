@@ -29,6 +29,13 @@ class FakeEngine:
     def __init__(self, cp: int = 20):
         self._cp = cp
 
+    @property
+    def is_running(self) -> bool:
+        return True
+
+    async def restart(self) -> None:
+        """No-op restart for test use."""
+
     async def analyze(self, fen: str, depth: int = 18) -> AnalysisResult:
         board = chess.Board(fen)
         score = chess_engine.PovScore(chess_engine.Cp(self._cp), chess.WHITE)
@@ -126,3 +133,40 @@ def test_move_promotion_uci_accepted(client):
     body = r.json()
     assert body["legal"] is True
     assert body["lastMoveSan"].startswith("e8=Q")
+
+
+# --- engine control routes -------------------------------------------------
+
+def test_engine_status_ok(client):
+    """GET /api/engine/status returns 200 with running:true from FakeEngine."""
+    r = client.get("/api/engine/status")
+    assert r.status_code == 200
+    body = r.json()
+    assert body["running"] is True
+
+
+def test_engine_restart_ok(client):
+    """POST /api/engine/restart returns 200 with restarted:true."""
+    r = client.post("/api/engine/restart")
+    assert r.status_code == 200
+    body = r.json()
+    assert body["restarted"] is True
+    assert isinstance(body["running"], bool)
+
+
+def test_engine_restart_running_reflects_fake(client):
+    """running field after restart matches FakeEngine.is_running (True)."""
+    r = client.post("/api/engine/restart")
+    assert r.status_code == 200
+    assert r.json()["running"] is True
+
+
+def test_move_still_works_after_restart(client):
+    """Existing happy-path move route is unaffected by the new engine routes."""
+    # Confirm restart doesn't disturb subsequent move analysis.
+    client.post("/api/engine/restart")
+    r = client.post("/api/move", json={"fen": START_FEN, "move": "e2e4"})
+    assert r.status_code == 200
+    body = r.json()
+    assert body["legal"] is True
+    assert body["lastMoveSan"] == "e4"
