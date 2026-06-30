@@ -10,6 +10,20 @@ import { makeSanAndPlay } from 'https://esm.sh/chessops@0.14.2/san';
 
 const byId = (id) => document.getElementById(id);
 
+const UI_PREFS_KEY = 'chess-training:ui:v1';
+
+function readUiPrefs() {
+  try { return JSON.parse(localStorage.getItem(UI_PREFS_KEY) || '{}') || {}; } catch (_) { return {}; }
+}
+
+function writeUiPref(key, val) {
+  try {
+    const prefs = readUiPrefs();
+    prefs[key] = val;
+    localStorage.setItem(UI_PREFS_KEY, JSON.stringify(prefs));
+  } catch (_) { /* best-effort */ }
+}
+
 let _api = null;
 
 // Replay baseFen + moves to produce a SAN per ply (display only).
@@ -115,6 +129,25 @@ function render() {
 
 export function initMovelist(api) {
   _api = api;
+
+  const toggle = byId('movelist-toggle');
+  const block = toggle ? toggle.closest('.movelist-block') : null;
+
+  // Apply saved collapsed state before first paint.
+  if (toggle && block && readUiPrefs().moveListCollapsed) {
+    block.classList.add('collapsed');
+    toggle.setAttribute('aria-expanded', 'false');
+  }
+
+  // Wire click handler — native <button> handles Enter/Space automatically.
+  if (toggle && block) {
+    toggle.addEventListener('click', () => {
+      const isNowCollapsed = block.classList.toggle('collapsed');
+      toggle.setAttribute('aria-expanded', String(!isNowCollapsed));
+      writeUiPref('moveListCollapsed', isNowCollapsed);
+    });
+  }
+
   if (api && api.on) api.on('position:change', render);
   render(); // initial paint
 }
