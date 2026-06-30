@@ -16,8 +16,7 @@ from __future__ import annotations
 
 import threading
 import time
-from typing import List, Optional
-from unittest.mock import patch
+from typing import List
 
 import chess
 import chess.engine as chess_engine
@@ -26,7 +25,6 @@ import pytest
 import app.engine as engine_module
 from app.engine import (
     INTERACTIVE_SOFT_TIME_S,
-    AnalysisResult,
     EngineUnavailable,
     StockfishEngine,
 )
