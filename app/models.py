@@ -299,6 +299,18 @@ class NarratedLeak(BaseModel):
     )
 
 
+class GameAccuracySummary(BaseModel):
+    """Estimated per-side Accuracy % + Elo for a reviewed game."""
+
+    white_accuracy: float | None = None
+    black_accuracy: float | None = None
+    white_elo: int | None = None
+    black_elo: int | None = None
+    white_moves: int = 0
+    black_moves: int = 0
+    my_color: str | None = None
+
+
 class ReviewResponse(BaseModel):
     """Response for ``GET /api/games/{game_id}/review``."""
 
@@ -309,6 +321,7 @@ class ReviewResponse(BaseModel):
         default_factory=list,
         description="Per-ply evals for the foresight eval graph.",
     )
+    summary: GameAccuracySummary | None = None
 
 
 class AnalyzeStatusResponse(BaseModel):

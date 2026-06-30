@@ -113,6 +113,10 @@ The opening trainer uses the bundled lichess-org/chess-openings TSVs under
   (Stockfish + python-chess: win-probability drop, null-move threat detection,
   static-exchange + motif tagging); no LLM/tokens. Set `CHESS_USERNAME` (see
   Configuration above) so it knows which color is yours, or pick the color per-import.
+  Opening a reviewed game also shows an **estimated Accuracy % and Elo for both
+  sides** (you and your opponent) in the review bar — Chess.com-style, derived from
+  the per-move evals already computed (no extra engine work). The rating is a rough
+  single-game estimate, not an official number.
 
 ## Develop / test
 ```sh

@@ -7,13 +7,20 @@ reject input before any engine call (bad FEN, illegal move) are tested directly.
 
 from __future__ import annotations
 
+from datetime import datetime, timezone
+from pathlib import Path
+from typing import Optional
+
 import chess
 import chess.engine as chess_engine
 import pytest
 from fastapi.testclient import TestClient
 
+import app.review as review_module
+import app.storage as storage
 from app.engine import AnalysisResult
 from app.main import app, get_engine
+from tests.engine_fakes import ScriptedEngine
 
 START_FEN = chess.STARTING_FEN
 
@@ -227,3 +234,244 @@ def test_move_analyze_omitted_still_analyzes(client):
     }
     # Engine must have been called (before + after = 2 calls for this request).
     assert client.fake_engine.analyze_call_count >= 2
+
+
+# ---------------------------------------------------------------------------
+# GET /api/games/{id}/review — summary field tests
+# ---------------------------------------------------------------------------
+#
+# These tests exercise the optional ``summary`` object added to the review
+# endpoint.  They require a live storage DB + the review pipeline, so they
+# bring in a fresh-storage fixture and use ScriptedEngine to run the analysis
+# pipeline synchronously (no background task).  The pattern mirrors
+# tests/test_games_api.py::TestReview exactly.
+# ---------------------------------------------------------------------------
+
+_REVIEW_START_FEN = chess.STARTING_FEN
+# After 1.e4
+_REVIEW_AFTER_E4 = "rnbqkbnr/pppppppp/8/8/4P3/8/PPPP1PPP/RNBQKBNR b KQkq - 0 1"
+# After 1.e4 e5
+_REVIEW_AFTER_E4_E5 = "rnbqkbnr/pppp1ppp/8/4p3/4P3/8/PPPP1PPP/RNBQKBNR w KQkq - 0 2"
+# After 1.e4 e5 2.Nf3
+_REVIEW_AFTER_NF3 = "rnbqkbnr/pppp1ppp/8/4p3/4P3/5N2/PPPP1PPP/RNBQKB1R b KQkq - 1 2"
+
+
+def _review_utc_now() -> str:
+    return datetime.now(timezone.utc).isoformat()
+
+
+@pytest.fixture()
+def review_storage(tmp_path: Path, monkeypatch):
+    """Isolated temp DB for review-summary tests; resets review module state."""
+    db_path = str(tmp_path / "review_summary_test.db")
+    monkeypatch.setenv("GAMES_DB", db_path)
+    storage.init(db_path)
+    review_module._interactive_pending = 0
+    yield
+    for gid in list(review_module._tasks.keys()):
+        review_module.cancel_analysis(gid)
+    review_module._interactive_pending = 0
+
+
+@pytest.fixture()
+def review_client(review_storage):
+    """TestClient with a neutral ScriptedEngine; storage pointed at temp DB."""
+    engine = ScriptedEngine()  # Cp(0) everywhere — no eval swings needed for structure tests
+    app.dependency_overrides[get_engine] = lambda: engine
+    with TestClient(app) as c:
+        yield c
+    app.dependency_overrides.clear()
+
+
+def _insert_done_game_with_evals(my_color: Optional[str] = "white") -> int:
+    """Insert a 4-ply game with non-null eval_cp_white + fen_before, set status done.
+
+    Returns the new game_id.  The four plies span three mover-pairs so that
+    accuracy.summarize() can score at least one move per side.
+    """
+    game_id = storage.insert_game({
+        "content_hash": f"summary-test-{_review_utc_now()}",
+        "pgn": '[Event "Test"]\n[White "Alice"]\n[Black "Bob"]\n[Result "*"]\n\n1. e4 e5 2. Nf3 *\n',
+        "imported_at": _review_utc_now(),
+        "white": "Alice",
+        "black": "Bob",
+        "my_color": my_color,
+        "ply_count": 4,
+    })
+    # Four plies: eval_cp_white and fen_before are both non-null so that
+    # accuracy.summarize() can compute per-side win-% drops.
+    plies = [
+        {
+            "ply": 1,
+            "san": "e4",
+            "uci": "e2e4",
+            "fen_before": _REVIEW_START_FEN,
+            "eval_cp_white": 20,     # slight white edge before e4
+            "mate_white": None,
+            "win_prob": None,
+            "is_user_move": True,
+            "clock_centis": None,
+        },
+        {
+            "ply": 2,
+            "san": "e5",
+            "uci": "e7e5",
+            "fen_before": _REVIEW_AFTER_E4,
+            "eval_cp_white": -10,    # black equalises
+            "mate_white": None,
+            "win_prob": None,
+            "is_user_move": False,
+            "clock_centis": None,
+        },
+        {
+            "ply": 3,
+            "san": "Nf3",
+            "uci": "g1f3",
+            "fen_before": _REVIEW_AFTER_E4_E5,
+            "eval_cp_white": 30,     # white edges ahead
+            "mate_white": None,
+            "win_prob": None,
+            "is_user_move": True,
+            "clock_centis": None,
+        },
+        {
+            "ply": 4,
+            "san": "Nc6",
+            "uci": "b8c6",
+            "fen_before": _REVIEW_AFTER_NF3,
+            "eval_cp_white": 10,     # black develops
+            "mate_white": None,
+            "win_prob": None,
+            "is_user_move": False,
+            "clock_centis": None,
+        },
+    ]
+    storage.write_plies(game_id, plies)
+    storage.set_status(game_id, "done")
+    return game_id
+
+
+def _insert_pending_game() -> int:
+    """Insert a minimal pending game (no evals, analysis_status='pending')."""
+    game_id = storage.insert_game({
+        "content_hash": f"pending-test-{_review_utc_now()}",
+        "pgn": '[Event "Test"]\n[White "X"]\n[Black "Y"]\n[Result "*"]\n\n1. d4 *\n',
+        "imported_at": _review_utc_now(),
+        "white": "X",
+        "black": "Y",
+        "my_color": None,
+        "ply_count": 1,
+    })
+    storage.write_plies(game_id, [
+        {
+            "ply": 1,
+            "san": "d4",
+            "uci": "d2d4",
+            "fen_before": _REVIEW_START_FEN,
+            "eval_cp_white": None,
+            "mate_white": None,
+            "win_prob": None,
+            "is_user_move": False,
+            "clock_centis": None,
+        }
+    ])
+    # analysis_status stays 'pending' (the default)
+    return game_id
+
+
+def test_review_summary_present_on_done_game(review_client, review_storage):
+    """GET /api/games/{id}/review returns a non-null summary for a done game.
+
+    The summary must contain all seven documented keys.  Accuracy values are
+    float-or-null; move counts are ints.  Exact numeric values are NOT asserted
+    here — those are the domain of the unit tests in test_analysis.py.
+    """
+    game_id = _insert_done_game_with_evals(my_color="white")
+
+    r = review_client.get(f"/api/games/{game_id}/review")
+    assert r.status_code == 200, r.text
+    body = r.json()
+
+    assert body["analysis_status"] == "done"
+    summary = body["summary"]
+    assert summary is not None, "Expected a non-null summary for a done game"
+
+    # All seven keys must be present.
+    expected_keys = {
+        "white_accuracy", "black_accuracy",
+        "white_elo", "black_elo",
+        "white_moves", "black_moves",
+        "my_color",
+    }
+    assert expected_keys == set(summary.keys()), (
+        f"summary keys mismatch: got {set(summary.keys())}"
+    )
+
+    # Move counts must be ints.
+    assert isinstance(summary["white_moves"], int)
+    assert isinstance(summary["black_moves"], int)
+
+    # Accuracy and Elo are float/int or null — never a wrong type.
+    for acc_key in ("white_accuracy", "black_accuracy"):
+        val = summary[acc_key]
+        assert val is None or isinstance(val, (int, float)), (
+            f"{acc_key} must be float or null, got {type(val)}"
+        )
+    for elo_key in ("white_elo", "black_elo"):
+        val = summary[elo_key]
+        assert val is None or isinstance(val, int), (
+            f"{elo_key} must be int or null, got {type(val)}"
+        )
+
+    # my_color is passed through from the game row.
+    assert summary["my_color"] == "white"
+
+    # With 4 plies and all fen_before set, at least one side must have scored moves.
+    assert summary["white_moves"] + summary["black_moves"] >= 1
+
+
+def test_review_summary_null_when_not_done(review_client, review_storage):
+    """GET /api/games/{id}/review returns summary=null for a pending game.
+
+    The route must return 200 for a pending game (not 404/422); only the
+    summary field changes based on analysis_status.
+    """
+    game_id = _insert_pending_game()
+
+    r = review_client.get(f"/api/games/{game_id}/review")
+    assert r.status_code == 200, (
+        f"Expected 200 for a pending game, got {r.status_code}: {r.text}"
+    )
+    body = r.json()
+
+    assert body["analysis_status"] == "pending"
+    assert body["summary"] is None, (
+        f"Expected summary=null for a pending game, got: {body['summary']}"
+    )
+
+
+def test_review_existing_fields_unchanged(review_client, review_storage):
+    """GET /api/games/{id}/review still returns all pre-existing top-level keys.
+
+    Guards against the summary addition accidentally dropping game_id,
+    analysis_status, leaks, or plies from the response shape.
+    """
+    game_id = _insert_done_game_with_evals(my_color="white")
+
+    r = review_client.get(f"/api/games/{game_id}/review")
+    assert r.status_code == 200, r.text
+    body = r.json()
+
+    # Pre-existing required keys — must all still be present.
+    assert "game_id" in body, "Missing field: game_id"
+    assert "analysis_status" in body, "Missing field: analysis_status"
+    assert "leaks" in body, "Missing field: leaks"
+    assert "plies" in body, "Missing field: plies"
+
+    # Types must be sensible.
+    assert body["game_id"] == game_id
+    assert isinstance(body["leaks"], list)
+    assert isinstance(body["plies"], list)
+
+    # Plies must reflect the 4 rows we wrote.
+    assert len(body["plies"]) == 4

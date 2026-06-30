@@ -529,9 +529,60 @@ async function loadReviewData(gameId) {
     // Trigger foresight render for current ply (which is 0 at entry).
     const currentState = _api && _api.actions && _api.actions.getState();
     if (currentState) renderForesight(currentState.cursor);
+    renderGameSummary(_reviewData && _reviewData.summary ? _reviewData.summary : null);
   } catch (_) {
     _reviewData = null;
   }
+}
+
+// ---------------------------------------------------------------------------
+// Game summary — shown in #review-game-summary in the review-bar
+// ---------------------------------------------------------------------------
+
+function renderGameSummary(summary) {
+  const el_ = document.getElementById('review-game-summary');
+  if (!el_) return;
+
+  if (!summary || (summary.white_accuracy == null && summary.black_accuracy == null)) {
+    el_.hidden = true;
+    el_.replaceChildren();
+    return;
+  }
+
+  // Determine display order and labels based on my_color.
+  let first, second;
+  if (summary.my_color === 'white') {
+    first  = { label: 'You',      acc: summary.white_accuracy, elo: summary.white_elo };
+    second = { label: 'Opponent', acc: summary.black_accuracy, elo: summary.black_elo };
+  } else if (summary.my_color === 'black') {
+    first  = { label: 'You',      acc: summary.black_accuracy, elo: summary.black_elo };
+    second = { label: 'Opponent', acc: summary.white_accuracy, elo: summary.white_elo };
+  } else {
+    first  = { label: 'White', acc: summary.white_accuracy, elo: summary.white_elo };
+    second = { label: 'Black', acc: summary.black_accuracy, elo: summary.black_elo };
+  }
+
+  const fmtAcc = (acc) => (acc == null ? '—' : acc.toFixed(1) + '%');
+  const fmtElo = (elo) => (elo == null ? '—' : '~' + elo);
+
+  const buildSide = ({ label, acc, elo }) => {
+    const side = el('div', { className: 'rgs-side' });
+    side.appendChild(el('span', { className: 'rgs-label', textContent: label }));
+    side.appendChild(el('span', { className: 'rgs-acc',   textContent: fmtAcc(acc) }));
+
+    const eloSpan = el('span', {
+      className: 'rgs-elo',
+      title: 'Estimated from this single game — a rough heuristic, not an official rating.',
+    });
+    eloSpan.appendChild(document.createTextNode(fmtElo(elo) + ' '));
+    eloSpan.appendChild(el('span', { className: 'rgs-est', textContent: 'est.' }));
+    side.appendChild(eloSpan);
+
+    return side;
+  };
+
+  el_.replaceChildren(buildSide(first), buildSide(second));
+  el_.hidden = false;
 }
 
 // ---------------------------------------------------------------------------
