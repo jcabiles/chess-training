@@ -4,6 +4,53 @@
   margin-top: var(--space-3);
   border-top: 1px solid var(--border-subtle);
   padding-top: var(--space-3);
+  max-height: 18rem;
+  overflow-y: auto;
+}
+
+.movelist-block.collapsed #move-list {
+  display: none;
+}
+
+/* Toggle button — reset UA styles so it looks like the old .eval-label,
+   then apply flex to push the chevron to the right. */
+.movelist-toggle {
+  display: flex;
+  width: 100%;
+  align-items: center;
+  justify-content: space-between;
+  background: transparent;
+  border: none;
+  padding: 0;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.movelist-toggle:hover {
+  color: var(--text-secondary);
+}
+
+.movelist-toggle:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 1px;
+}
+
+/* Chevron — rotated when expanded (default), points right when collapsed. */
+.movelist-chevron {
+  display: inline-block;
+  transform: rotate(0deg);
+  transition: transform var(--motion-fast) var(--ease-out);
+}
+
+.movelist-block.collapsed .movelist-chevron {
+  transform: rotate(-90deg);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .movelist-chevron {
+    transition: none;
+  }
 }
 
 .movelist-empty {
